@@ -5,4 +5,6 @@ authors = ["Marshall Quander <marshall@quander.me>"]
 description = "Rust bindings for creating Janus plugins."
 
 [dependencies]
-janus-plugin-sys = { path = "janus-plugin-sys", version = "0.1.0" }
+chrono = "0.4"
+colored = "1.5"
+janus-plugin-sys = { path = "janus-plugin-sys" }

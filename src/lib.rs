@@ -1,5 +1,11 @@
+extern crate chrono;
+extern crate colored;
 extern crate janus_plugin_sys as internal;
 
+use chrono::Local;
+use colored::{Color, Colorize};
+use std::fmt;
+use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
 pub use internal::JANUS_PLUGIN_API_VERSION as API_VERSION;
 pub use internal::janus_callbacks as PluginCallbacks;
@@ -8,7 +14,51 @@ pub use internal::janus_plugin_result as PluginResult;
 pub use internal::janus_plugin_result_type as PluginResultType;
 pub use internal::janus_plugin_session as PluginSession;
 pub use internal::json_t as Json;
-pub use internal::janus_vprintf as log;
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum LogLevel {
+    Fatal,
+    Err,
+    Warn,
+    Info,
+    Verb,
+    Huge,
+    Dbg
+}
+
+impl LogLevel {
+    fn color(&self) -> Option<Color> {
+        match *self {
+            LogLevel::Fatal => Some(Color::Magenta),
+            LogLevel::Err => Some(Color::Red),
+            LogLevel::Warn => Some(Color::Yellow),
+            _ => None
+        }
+    }
+}
+
+impl fmt::Display for LogLevel {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let name = format!("[{:?}]", self).to_uppercase();
+        match self.color() {
+            Some(c) => name.color(c).fmt(f),
+            None => f.write_str(&name)
+        }
+    }
+}
+
+pub fn log(level: LogLevel, message: &str) {
+    let mut parts = Vec::<String>::new();
+    if unsafe { internal::janus_log_timestamps == 1 } {
+        parts.push(format!("{}", Local::now().format("[%a %b %e %T %Y]")))
+    }
+    if level >= LogLevel::Warn {
+        parts.push(format!("{}", level));
+    }
+    parts.push(message.to_owned());
+    let output = CString::new(parts.join(" ")).unwrap();
+    unsafe { internal::janus_vprintf(output.as_ptr()) }
+}
 
 /// Represents metadata about this plugin which Janus can query at runtime.
 pub struct PluginMetadata {

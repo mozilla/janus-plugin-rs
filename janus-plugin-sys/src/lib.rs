@@ -19,8 +19,8 @@ pub enum janus_plugin_result_type {
 pub struct janus_plugin_session {
     pub gateway_handle: *mut c_void,
     pub plugin_handle: *mut c_void,
-    pub _bitfield_1: u8,
-    pub __bindgen_padding_0: [u8; 7usize],
+    pub stopped_bitfield: u8, // todo: clean this up
+    pub __padding: [u8; 7usize],
 }
 
 /// The result of a Janus event callback.
@@ -94,6 +94,7 @@ pub struct json_t {
 }
 
 extern "C" {
+    pub static janus_log_timestamps: c_int;
     pub fn janus_plugin_result_new(type_: janus_plugin_result_type, text: *const c_char, content: *mut json_t) -> *mut janus_plugin_result;
     pub fn janus_vprintf(format: *const c_char, ...);
     pub fn json_object() -> *mut json_t;
