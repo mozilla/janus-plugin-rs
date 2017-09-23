@@ -5,6 +5,7 @@ extern crate janus_plugin_sys as internal;
 use chrono::Local;
 use colored::{Color, Colorize};
 use std::fmt;
+use std::fmt::Write;
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
 pub use internal::JANUS_PLUGIN_API_VERSION as API_VERSION;
@@ -17,13 +18,13 @@ pub use internal::json_t as Json;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum LogLevel {
-    Fatal,
-    Err,
-    Warn,
-    Info,
-    Verb,
-    Huge,
     Dbg,
+    Huge,
+    Verb,
+    Info,
+    Warn,
+    Err,
+    Fatal
 }
 
 impl LogLevel {
@@ -48,16 +49,15 @@ impl fmt::Display for LogLevel {
 }
 
 pub fn log(level: LogLevel, message: &str) {
-    let mut parts = Vec::<String>::new();
+    let mut output = String::new();
     if unsafe { internal::janus_log_timestamps == 1 } {
-        parts.push(format!("{}", Local::now().format("[%a %b %e %T %Y]")))
+        write!(output, "{} ", Local::now().format("[%a %b %e %T %Y]")).unwrap()
     }
     if level >= LogLevel::Warn {
-        parts.push(format!("{}", level));
+        write!(output, "{} ", level).unwrap();
     }
-    parts.push(message.to_owned());
-    let output = CString::new(parts.join(" ")).unwrap();
-    unsafe { internal::janus_vprintf(output.as_ptr()) }
+    output.push_str(message);
+    unsafe { internal::janus_vprintf(CString::new(output).unwrap().as_ptr()) }
 }
 
 /// Represents metadata about this plugin which Janus can query at runtime.
