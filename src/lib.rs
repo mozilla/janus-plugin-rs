@@ -23,7 +23,7 @@ pub enum LogLevel {
     Info,
     Verb,
     Huge,
-    Dbg
+    Dbg,
 }
 
 impl LogLevel {
@@ -32,7 +32,7 @@ impl LogLevel {
             LogLevel::Fatal => Some(Color::Magenta),
             LogLevel::Err => Some(Color::Red),
             LogLevel::Warn => Some(Color::Yellow),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -42,7 +42,7 @@ impl fmt::Display for LogLevel {
         let name = format!("[{:?}]", self).to_uppercase();
         match self.color() {
             Some(c) => name.color(c).fmt(f),
-            None => f.write_str(&name)
+            None => f.write_str(&name),
         }
     }
 }
@@ -67,7 +67,7 @@ pub struct PluginMetadata {
     pub description: *const c_char,
     pub name: *const c_char,
     pub author: *const c_char,
-    pub package: *const c_char
+    pub package: *const c_char,
 }
 
 /// Helper macro to define a library as containing a Janus plugin. Should be called with
