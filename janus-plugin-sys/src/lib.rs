@@ -1,5 +1,8 @@
 #![allow(non_camel_case_types)]
+
+extern crate jansson_sys;
 use std::os::raw::{c_char, c_int, c_void};
+use jansson_sys::json_t;
 
 /// The Janus API version this library's plugins are compatible with.
 pub const JANUS_PLUGIN_API_VERSION: c_int = 8;
@@ -82,31 +85,19 @@ pub struct janus_plugin {
     pub query_session: unsafe extern "C" fn(handle: *mut janus_plugin_session) -> *mut json_t,
 }
 
-/// The type of a RapidJSON value.
-#[repr(u32)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum json_type {
-    JSON_OBJECT = 0,
-    JSON_ARRAY = 1,
-    JSON_STRING = 2,
-    JSON_INTEGER = 3,
-    JSON_REAL = 4,
-    JSON_TRUE = 5,
-    JSON_FALSE = 6,
-    JSON_NULL = 7,
-}
-
-/// A RapidJSON value.
-#[repr(C)]
-#[derive(Debug)]
-pub struct json_t {
-    pub type_: json_type,
-    pub refcount: usize,
-}
+/// An opaque representation of an SDP offer.
+pub enum janus_sdp { }
 
 extern "C" {
     pub static janus_log_timestamps: c_int;
+    pub fn janus_sdp_free(sdp: *mut janus_sdp);
+    pub fn janus_sdp_parse(sdp: *const c_char, error: *const c_char, errlen: usize) -> *mut janus_sdp;
+    pub fn janus_sdp_generate_answer(sdp: *mut janus_sdp, ...) -> *mut janus_sdp;
+    pub fn janus_sdp_write(sdp: *mut janus_sdp) -> *mut c_char;
     pub fn janus_plugin_result_new(type_: janus_plugin_result_type, text: *const c_char, content: *mut json_t) -> *mut janus_plugin_result;
+    pub fn janus_plugin_result_destroy(result: *mut janus_plugin_result);
+
+    /// Writes an entry to the Janus log. The entry is copied synchronously from format into the log buffer
+    /// and flushed asynchronously to disk/stdout.
     pub fn janus_vprintf(format: *const c_char, ...);
-    pub fn json_object() -> *mut json_t;
 }

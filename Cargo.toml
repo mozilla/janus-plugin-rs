@@ -7,4 +7,5 @@ description = "Rust bindings for creating Janus plugins."
 [dependencies]
 chrono = "0.4"
 colored = "1.5"
+jansson-sys = { path = "jansson-sys" }
 janus-plugin-sys = { path = "janus-plugin-sys" }

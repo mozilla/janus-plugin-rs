@@ -1,6 +1,7 @@
 extern crate chrono;
 extern crate colored;
-extern crate janus_plugin_sys as internal;
+extern crate janus_plugin_sys as janus;
+extern crate jansson_sys as jansson;
 
 use chrono::Local;
 use colored::{Color, Colorize};
@@ -8,13 +9,13 @@ use std::fmt;
 use std::fmt::Write;
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
-pub use internal::JANUS_PLUGIN_API_VERSION as API_VERSION;
-pub use internal::janus_callbacks as PluginCallbacks;
-pub use internal::janus_plugin as Plugin;
-pub use internal::janus_plugin_result as PluginResult;
-pub use internal::janus_plugin_result_type as PluginResultType;
-pub use internal::janus_plugin_session as PluginSession;
-pub use internal::json_t as Json;
+pub use janus::JANUS_PLUGIN_API_VERSION as API_VERSION;
+pub use janus::janus_callbacks as PluginCallbacks;
+pub use janus::janus_plugin as Plugin;
+pub use janus::janus_plugin_result as PluginResult;
+pub use janus::janus_plugin_result_type as PluginResultType;
+pub use janus::janus_plugin_session as PluginSession;
+pub use jansson::json_t as Json;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum LogLevel {
@@ -48,16 +49,27 @@ impl fmt::Display for LogLevel {
     }
 }
 
+/// Writes a message at the given log level to the Janus log.
 pub fn log(level: LogLevel, message: &str) {
     let mut output = String::new();
-    if unsafe { internal::janus_log_timestamps == 1 } {
+    if unsafe { janus::janus_log_timestamps == 1 } {
         write!(output, "{} ", Local::now().format("[%a %b %e %T %Y]")).unwrap()
     }
     if level >= LogLevel::Warn {
         write!(output, "{} ", level).unwrap();
     }
     output.push_str(message);
-    unsafe { internal::janus_vprintf(CString::new(output).unwrap().as_ptr()) }
+    unsafe { janus::janus_vprintf(CString::new(output).unwrap().as_ptr()) }
+}
+
+/// Allocates a Janus plugin result. Should be destroyed with destroy_result.
+pub fn create_result(type_: PluginResultType, text: *const c_char, content: *mut Json) -> Box<PluginResult> {
+    unsafe { Box::from_raw(janus::janus_plugin_result_new(type_, text, content)) }
+}
+
+/// Destroys a Janus plugin result.
+pub fn destroy_result(result: Box<PluginResult>) {
+    unsafe { janus::janus_plugin_result_destroy(Box::into_raw(result)) }
 }
 
 /// Represents metadata about this plugin which Janus can query at runtime.
