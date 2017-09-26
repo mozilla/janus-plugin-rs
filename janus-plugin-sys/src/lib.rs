@@ -4,6 +4,8 @@ extern crate jansson_sys;
 use std::os::raw::{c_char, c_int, c_void};
 use jansson_sys::json_t;
 
+pub mod sdp;
+
 /// The Janus API version this library's plugins are compatible with.
 pub const JANUS_PLUGIN_API_VERSION: c_int = 8;
 
@@ -85,15 +87,8 @@ pub struct janus_plugin {
     pub query_session: unsafe extern "C" fn(handle: *mut janus_plugin_session) -> *mut json_t,
 }
 
-/// An opaque representation of an SDP offer.
-pub enum janus_sdp { }
-
 extern "C" {
     pub static janus_log_timestamps: c_int;
-    pub fn janus_sdp_free(sdp: *mut janus_sdp);
-    pub fn janus_sdp_parse(sdp: *const c_char, error: *const c_char, errlen: usize) -> *mut janus_sdp;
-    pub fn janus_sdp_generate_answer(sdp: *mut janus_sdp, ...) -> *mut janus_sdp;
-    pub fn janus_sdp_write(sdp: *mut janus_sdp) -> *mut c_char;
     pub fn janus_plugin_result_new(type_: janus_plugin_result_type, text: *const c_char, content: *mut json_t) -> *mut janus_plugin_result;
     pub fn janus_plugin_result_destroy(result: *mut janus_plugin_result);
 
