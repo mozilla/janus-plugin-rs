@@ -51,7 +51,7 @@ impl fmt::Display for LogLevel {
 
 /// Writes a message at the given log level to the Janus log.
 pub fn log(level: LogLevel, message: &str) {
-    let mut output = String::new();
+    let mut output = String::with_capacity(message.len() + 40);
     if unsafe { janus::janus_log_timestamps == 1 } {
         write!(output, "{} ", Local::now().format("[%a %b %e %T %Y]")).unwrap()
     }
@@ -59,6 +59,7 @@ pub fn log(level: LogLevel, message: &str) {
         write!(output, "{} ", level).unwrap();
     }
     output.push_str(message);
+    output.push('\n');
     unsafe { janus::janus_vprintf(CString::new(output).unwrap().as_ptr()) }
 }
 
