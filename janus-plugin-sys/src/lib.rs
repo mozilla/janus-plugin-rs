@@ -89,8 +89,12 @@ pub struct janus_plugin {
 
 extern "C" {
     pub static janus_log_timestamps: c_int;
+    pub static janus_log_colors: c_int;
+    pub static janus_log_level: c_int;
+
     pub fn janus_plugin_result_new(type_: janus_plugin_result_type, text: *const c_char, content: *mut json_t) -> *mut janus_plugin_result;
     pub fn janus_plugin_result_destroy(result: *mut janus_plugin_result);
+    pub fn janus_get_api_error(error: c_int) -> *const c_char;
 
     /// Writes an entry to the Janus log. The entry is copied synchronously from format into the log buffer
     /// and flushed asynchronously to disk/stdout.
