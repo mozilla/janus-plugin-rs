@@ -36,13 +36,6 @@ pub struct janus_plugin_result {
 #[repr(C)]
 #[derive(Debug)]
 pub struct janus_callbacks {
-    pub relay_rtp: extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
-    pub relay_rtcp: extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
-    pub relay_data: extern "C" fn(handle: *mut janus_plugin_session, buf: *mut c_char, len: c_int),
-    pub close_pc: extern "C" fn(handle: *mut janus_plugin_session),
-    pub end_session: extern "C" fn(handle: *mut janus_plugin_session),
-    pub events_is_enabled: extern "C" fn() -> c_int,
-    pub notify_event: extern "C" fn(plugin: *mut janus_plugin, handle: *mut janus_plugin_session, event: *mut json_t),
     pub push_event: extern "C" fn(
         handle: *mut janus_plugin_session,
         plugin: *mut janus_plugin,
@@ -50,6 +43,13 @@ pub struct janus_callbacks {
         message: *mut json_t,
         jsep: *mut json_t,
     ) -> c_int,
+    pub relay_rtp: extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
+    pub relay_rtcp: extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
+    pub relay_data: extern "C" fn(handle: *mut janus_plugin_session, buf: *mut c_char, len: c_int),
+    pub close_pc: extern "C" fn(handle: *mut janus_plugin_session),
+    pub end_session: extern "C" fn(handle: *mut janus_plugin_session),
+    pub events_is_enabled: extern "C" fn() -> c_int,
+    pub notify_event: extern "C" fn(plugin: *mut janus_plugin, handle: *mut janus_plugin_session, event: *mut json_t),
 }
 
 #[repr(C)]
@@ -65,6 +65,12 @@ pub struct janus_plugin {
     pub get_author: unsafe extern "C" fn() -> *const c_char,
     pub get_package: unsafe extern "C" fn() -> *const c_char,
     pub create_session: unsafe extern "C" fn(handle: *mut janus_plugin_session, error: *mut c_int),
+    pub handle_message: unsafe extern "C" fn(
+        handle: *mut janus_plugin_session,
+        transaction: *mut c_char,
+        message: *mut json_t,
+        jsep: *mut json_t,
+    ) -> *mut janus_plugin_result,
     pub setup_media: unsafe extern "C" fn(handle: *mut janus_plugin_session),
     pub incoming_rtp: unsafe extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
     pub incoming_rtcp: unsafe extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
@@ -73,12 +79,6 @@ pub struct janus_plugin {
     pub hangup_media: unsafe extern "C" fn(handle: *mut janus_plugin_session),
     pub destroy_session: unsafe extern "C" fn(handle: *mut janus_plugin_session, error: *mut c_int),
     pub query_session: unsafe extern "C" fn(handle: *mut janus_plugin_session) -> *mut json_t,
-    pub handle_message: unsafe extern "C" fn(
-        handle: *mut janus_plugin_session,
-        transaction: *mut c_char,
-        message: *mut json_t,
-        jsep: *mut json_t,
-    ) -> *mut janus_plugin_result,
 }
 
 extern "C" {
