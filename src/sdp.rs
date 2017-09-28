@@ -1,15 +1,93 @@
-extern crate libc;
-extern crate janus_plugin_sys as janus;
 extern crate glib_sys as glib;
+extern crate libc;
 
+use super::janus;
 use std::error::Error;
-use std::fmt;
 use std::ffi::{CStr, CString};
+use std::fmt;
 use std::ops::Deref;
 use std::os::raw::c_char;
 
 pub type RawSdp = janus::sdp::janus_sdp;
+pub type MediaType = janus::sdp::janus_sdp_mtype;
+pub type MediaDirection = janus::sdp::janus_sdp_mdirection;
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// Available Janus audio codecs. See utils.c.
+pub enum AudioCodec {
+    Opus,
+    Pcmu,
+    Pcma,
+    G722,
+    Isac16,
+    Isac32,
+}
+
+impl AudioCodec {
+    pub fn to_str(&self) -> &'static str {
+        match *self {
+            AudioCodec::Opus => "opus",
+            AudioCodec::Pcmu => "pcmu",
+            AudioCodec::Pcma => "pcma",
+            AudioCodec::G722 => "g722",
+            AudioCodec::Isac16 => "isac16",
+            AudioCodec::Isac32 => "isac32",
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// Available Janus video codecs. See utils.c.
+pub enum VideoCodec {
+    Vp8,
+    Vp9,
+    H264,
+}
+
+impl VideoCodec {
+    pub fn to_str(&self) -> &'static str {
+        match *self {
+            VideoCodec::Vp8 => "vp8",
+            VideoCodec::Vp9 => "vp9",
+            VideoCodec::H264 => "h264",
+        }
+    }
+}
+
+#[repr(i32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// Parameters controlling SDP offer answering behavior. Used as keys in the parameter list
+/// for janus_sdp_generate_answer. See sdp-utils.h in the Janus source for more details.
+pub enum OfferAnswerParameters {
+    /// Used to signal the end of the offer-answer parameter list.
+    Done = 0,
+    /// Whether to accept or reject audio.
+    Audio = 1,
+    /// Whether to accept or reject video.
+    Video = 2,
+    /// Whether to accept or reject data.
+    Data = 3,
+    /// The MediaDirection for the audio stream.
+    AudioDirection = 4,
+    /// The MediaDirection for the video stream.
+    VideoDirection = 5,
+    /// The AudioCodec for the audio stream.
+    AudioCodec = 6,
+    /// The VideoCodec for the video stream.
+    VideoCodec = 7,
+    /// The payload type for the audio stream.
+    AudioPayloadType = 8,
+    /// The payload type for the video stream.
+    VideoPayloadType = 9,
+    /// Whether to negotiate telephone events.
+    AudioDtmf = 10,
+    /// Whether to add RTCP-FB attributes.
+    VideoRtcpfbDefaults = 11,
+    /// Whether to add attributes for H.264 video.
+    VideoH264Fmtp = 12,
+}
+
+/// An SDP session description.
 pub struct Sdp {
     contents: *mut RawSdp,
 }
@@ -28,8 +106,9 @@ impl Drop for Sdp {
     }
 }
 
+/// A C-style string which was allocated using glibc.
 pub struct GLibString<'a> {
-    pub contents: &'a CStr
+    pub contents: &'a CStr,
 }
 
 impl<'a> Deref for GLibString<'a> {
@@ -47,6 +126,7 @@ impl<'a> Drop for GLibString<'a> {
 }
 
 #[derive(Debug)]
+/// An error emitted by Janus when attempting to parse a client-supplied SDP.
 pub struct SdpParsingError {
     pub details: String,
 }
@@ -63,23 +143,32 @@ impl Error for SdpParsingError {
     }
 }
 
-pub fn parse_sdp(offer: CString, err_capacity: usize) -> Result<Sdp, Box<Error>> {
-    let mut error_buffer = Vec::<u8>::with_capacity(err_capacity);
+/// Parses an SDP offer string from a client into a structured SDP object.
+pub fn parse_sdp(offer: CString) -> Result<Sdp, Box<Error>> {
+    let mut error_buffer = Vec::<u8>::with_capacity(512);
     let error_ptr = error_buffer.as_mut_ptr() as *mut c_char;
     let result = unsafe { janus::sdp::janus_sdp_parse(offer.as_ptr(), error_ptr, error_buffer.capacity()) };
     if result.is_null() {
         unsafe { error_buffer.set_len(libc::strlen(error_ptr)) }
-        Err(Box::new(SdpParsingError { details: CString::new(error_buffer)?.into_string()? }))
+        Err(Box::new(SdpParsingError {
+            details: CString::new(error_buffer)?.into_string()?,
+        }))
     } else {
         Ok(Sdp { contents: result })
     }
 }
 
+/// Given an SDP offer from a client, generates an SDP answer.
 pub fn answer_sdp(sdp: &Sdp) -> Sdp {
-    let result = unsafe { janus::sdp::janus_sdp_generate_answer(sdp.contents, 0) };
+    let result = unsafe { janus::sdp::janus_sdp_generate_answer(sdp.contents, OfferAnswerParameters::Done) };
     Sdp { contents: result }
 }
 
+/// Writes a structured SDP object into a string.
 pub fn write_sdp(answer: &Sdp) -> GLibString {
-    unsafe { GLibString { contents: CStr::from_ptr(janus::sdp::janus_sdp_write(answer.contents)) }}
+    unsafe {
+        GLibString {
+            contents: CStr::from_ptr(janus::sdp::janus_sdp_write(answer.contents)),
+        }
+    }
 }

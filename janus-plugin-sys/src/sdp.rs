@@ -2,8 +2,8 @@
 
 extern crate glib_sys;
 
-use std::os::raw::{c_char, c_short, c_int, c_long, c_ulong};
 use self::glib_sys::{gboolean, GList};
+use std::os::raw::{c_char, c_int, c_long, c_short, c_ulong};
 
 pub type guint16 = c_short;
 pub type guint64 = c_ulong;
@@ -77,10 +77,12 @@ extern "C" {
     pub fn janus_sdp_mtype_str(type_: janus_sdp_mtype) -> *const c_char;
     pub fn janus_sdp_parse_mdirection(direction: *const c_char) -> janus_sdp_mdirection;
     pub fn janus_sdp_mdirection_str(direction: janus_sdp_mdirection) -> *const c_char;
-    pub fn janus_sdp_mline_create(type_: janus_sdp_mtype, port: guint16,
-                                  proto: *const c_char,
-                                  direction: janus_sdp_mdirection)
-     -> *mut janus_sdp_mline;
+    pub fn janus_sdp_mline_create(
+        type_: janus_sdp_mtype,
+        port: guint16,
+        proto: *const c_char,
+        direction: janus_sdp_mdirection,
+    ) -> *mut janus_sdp_mline;
     pub fn janus_sdp_mline_destroy(mline: *mut janus_sdp_mline);
     pub fn janus_sdp_mline_find(sdp: *mut janus_sdp, type_: janus_sdp_mtype) -> *mut janus_sdp_mline;
     pub fn janus_sdp_attribute_create(name: *const c_char, value: *const c_char, ...) -> *mut janus_sdp_attribute;

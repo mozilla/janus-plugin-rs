@@ -1,13 +1,14 @@
 extern crate chrono;
 extern crate colored;
-extern crate janus_plugin_sys as janus;
 
-use std::ffi::CString;
-use std::fmt::Write;
 use self::chrono::Local;
 use self::colored::{Color, Colorize};
+use super::janus;
+use std::ffi::CString;
+use std::fmt::Write;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+/// A Janus log level. Lower is more severe.
 pub enum LogLevel {
     Fatal = 1,
     Err = 2,
@@ -19,6 +20,7 @@ pub enum LogLevel {
 }
 
 impl LogLevel {
+    /// The color associated with each log level's label (if colors are enabled.)
     fn color(&self) -> Option<Color> {
         match *self {
             LogLevel::Fatal => Some(Color::Magenta),
@@ -43,7 +45,7 @@ pub fn log(level: LogLevel, message: &str) {
             let name = format!("[{:?}] ", level).to_uppercase();
             match (are_colors_enabled, level.color()) {
                 (true, Some(c)) => output.push_str(&name.color(c)),
-                _ => output.push_str(&name)
+                _ => output.push_str(&name),
             }
         }
         output.push_str(message);

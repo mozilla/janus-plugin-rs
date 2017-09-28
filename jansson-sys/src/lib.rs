@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types)]
 // See https://jansson.readthedocs.io/ for API documentation.
 
-use std::os::raw::{c_char, c_int, c_void, c_longlong};
+use std::os::raw::{c_char, c_int, c_longlong, c_void};
 
 /// The type of a JSON value.
 #[repr(u32)]
@@ -118,9 +118,9 @@ extern crate cstr_macro;
 #[cfg(test)]
 mod tests {
 
-    use std::ptr;
-    use std::ffi::CStr;
     use super::*;
+    use std::ffi::CStr;
+    use std::ptr;
 
     #[test]
     fn object_encoding() {
