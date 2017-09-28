@@ -1,8 +1,12 @@
+extern crate libc;
 extern crate janus_plugin_sys as janus;
 extern crate glib_sys as glib;
 
+use std::error::Error;
+use std::fmt;
 use std::ffi::{CStr, CString};
 use std::ops::Deref;
+use std::os::raw::c_char;
 
 pub type RawSdp = janus::sdp::janus_sdp;
 
@@ -42,21 +46,37 @@ impl<'a> Drop for GLibString<'a> {
     }
 }
 
-pub fn parse_sdp(offer: &str, err_capacity: usize) -> Result<Sdp, String> {
-    let offer_buffer = CString::new(offer).unwrap().as_ptr();
+#[derive(Debug)]
+pub struct SdpParsingError {
+    pub details: String,
+}
+
+impl fmt::Display for SdpParsingError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.details)
+    }
+}
+
+impl Error for SdpParsingError {
+    fn description(&self) -> &str {
+        &self.details
+    }
+}
+
+pub fn parse_sdp(offer: CString, err_capacity: usize) -> Result<Sdp, Box<Error>> {
     let mut error_buffer = Vec::<u8>::with_capacity(err_capacity);
-    let result = unsafe {
-        janus::sdp::janus_sdp_parse(offer_buffer, error_buffer.as_mut_ptr() as *mut i8, error_buffer.capacity())
-    };
+    let error_ptr = error_buffer.as_mut_ptr() as *mut c_char;
+    let result = unsafe { janus::sdp::janus_sdp_parse(offer.as_ptr(), error_ptr, error_buffer.capacity()) };
     if result.is_null() {
-        Err(CString::new(error_buffer).unwrap().to_str().unwrap().to_owned())
+        unsafe { error_buffer.set_len(libc::strlen(error_ptr)) }
+        Err(Box::new(SdpParsingError { details: CString::new(error_buffer)?.into_string()? }))
     } else {
         Ok(Sdp { contents: result })
     }
 }
 
 pub fn answer_sdp(sdp: &Sdp) -> Sdp {
-    let result = unsafe { janus::sdp::janus_sdp_generate_answer(sdp as *const _ as *mut _, 0) };
+    let result = unsafe { janus::sdp::janus_sdp_generate_answer(sdp.contents, 0) };
     Sdp { contents: result }
 }
 
