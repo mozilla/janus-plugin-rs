@@ -7,6 +7,7 @@ use std::ffi::{CStr, CString};
 use std::fmt;
 use std::ops::Deref;
 use std::os::raw::c_char;
+pub use janus::sdp::janus_sdp_generate_answer as generate_answer;
 
 pub type RawSdp = janus::sdp::janus_sdp;
 pub type MediaType = janus::sdp::janus_sdp_mtype;
@@ -89,7 +90,13 @@ pub enum OfferAnswerParameters {
 
 /// An SDP session description.
 pub struct Sdp {
-    contents: *mut RawSdp,
+    pub contents: *mut RawSdp,
+}
+
+impl Sdp {
+    pub fn new(ptr: *mut RawSdp) -> Sdp {
+        Sdp { contents: ptr }
+    }
 }
 
 impl Deref for Sdp {
@@ -143,6 +150,21 @@ impl Error for SdpParsingError {
     }
 }
 
+#[macro_export]
+/// Given an SDP offer from a client, generates an SDP answer.
+macro_rules! answer_sdp {
+    ($sdp:expr $(, $param:expr, $value:expr),*) => {{
+        let result = unsafe {
+            $crate::sdp::generate_answer(
+                $sdp.contents,
+                $($param, $value,)*
+                $crate::sdp::OfferAnswerParameters::Done
+            )
+        };
+        $crate::sdp::Sdp::new(result)
+    }}
+}
+
 /// Parses an SDP offer string from a client into a structured SDP object.
 pub fn parse_sdp(offer: CString) -> Result<Sdp, Box<Error>> {
     let mut error_buffer = Vec::<u8>::with_capacity(512);
@@ -156,12 +178,6 @@ pub fn parse_sdp(offer: CString) -> Result<Sdp, Box<Error>> {
     } else {
         Ok(Sdp { contents: result })
     }
-}
-
-/// Given an SDP offer from a client, generates an SDP answer.
-pub fn answer_sdp(sdp: &Sdp) -> Sdp {
-    let result = unsafe { janus::sdp::janus_sdp_generate_answer(sdp.contents, OfferAnswerParameters::Done) };
-    Sdp { contents: result }
 }
 
 /// Writes a structured SDP object into a string.
