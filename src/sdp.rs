@@ -175,7 +175,7 @@ pub fn parse_sdp(offer: CString) -> Result<Sdp, Box<Error>> {
     if result.is_null() {
         unsafe { error_buffer.set_len(libc::strlen(error_ptr)) }
         Err(Box::new(SdpParsingError {
-            details: CString::new(error_buffer)?.into_string()?,
+            details: String::from_utf8(error_buffer)?,
         }))
     } else {
         Ok(Sdp { contents: result })
