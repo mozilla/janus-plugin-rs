@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types)]
+#![deny(missing_debug_implementations)]
 
 extern crate jansson_sys;
 use jansson_sys::json_t;

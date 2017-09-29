@@ -2,12 +2,12 @@ extern crate glib_sys as glib;
 extern crate libc;
 
 use super::janus;
+pub use janus::sdp::janus_sdp_generate_answer as generate_answer;
 use std::error::Error;
 use std::ffi::{CStr, CString};
 use std::fmt;
 use std::ops::Deref;
 use std::os::raw::c_char;
-pub use janus::sdp::janus_sdp_generate_answer as generate_answer;
 
 pub type RawSdp = janus::sdp::janus_sdp;
 pub type MediaType = janus::sdp::janus_sdp_mtype;
@@ -88,6 +88,7 @@ pub enum OfferAnswerParameters {
     VideoH264Fmtp = 12,
 }
 
+#[derive(Debug)]
 /// An SDP session description.
 pub struct Sdp {
     pub contents: *mut RawSdp,
@@ -113,6 +114,7 @@ impl Drop for Sdp {
     }
 }
 
+#[derive(Debug)]
 /// A C-style string which was allocated using glibc.
 pub struct GLibString<'a> {
     pub contents: &'a CStr,

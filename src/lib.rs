@@ -1,3 +1,5 @@
+#![deny(missing_debug_implementations)]
+
 extern crate jansson_sys as jansson;
 extern crate janus_plugin_sys as janus;
 
@@ -35,6 +37,7 @@ pub fn destroy_result(result: Box<PluginResult>) {
     unsafe { janus::janus_plugin_result_destroy(Box::into_raw(result)) }
 }
 
+#[derive(Debug)]
 /// Represents metadata about this plugin which Janus can query at runtime.
 pub struct PluginMetadata {
     pub version: c_int,
