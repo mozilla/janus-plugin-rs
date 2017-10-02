@@ -1,17 +1,17 @@
 #![deny(missing_debug_implementations)]
 
-extern crate jansson_sys as jansson;
-extern crate janus_plugin_sys as janus;
+extern crate jansson_sys;
+extern crate janus_plugin_sys as ffi;
 
 pub use debug::LogLevel;
 pub use debug::log;
-pub use jansson::json_t as Json;
-pub use janus::JANUS_PLUGIN_API_VERSION as API_VERSION;
-pub use janus::janus_callbacks as PluginCallbacks;
-pub use janus::janus_plugin as Plugin;
-pub use janus::janus_plugin_result as PluginResult;
-pub use janus::janus_plugin_result_type as PluginResultType;
-pub use janus::janus_plugin_session as PluginSession;
+pub use ffi::JANUS_PLUGIN_API_VERSION as API_VERSION;
+pub use ffi::janus_callbacks as PluginCallbacks;
+pub use ffi::janus_plugin as Plugin;
+pub use ffi::janus_plugin_result as PluginResult;
+pub use ffi::janus_plugin_result_type as PluginResultType;
+pub use ffi::janus_plugin_session as PluginSession;
+pub use jansson_sys::json_t as Json;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
 
@@ -21,7 +21,7 @@ pub mod sdp;
 /// Converts a Janus gateway error code to an error message.
 pub fn get_api_error(error: i32) -> &'static str {
     unsafe {
-        CStr::from_ptr(janus::janus_get_api_error(error))
+        CStr::from_ptr(ffi::janus_get_api_error(error))
             .to_str()
             .unwrap()
     }
@@ -29,12 +29,12 @@ pub fn get_api_error(error: i32) -> &'static str {
 
 /// Allocates a Janus plugin result. Should be destroyed with destroy_result.
 pub fn create_result(type_: PluginResultType, text: *const c_char, content: *mut Json) -> Box<PluginResult> {
-    unsafe { Box::from_raw(janus::janus_plugin_result_new(type_, text, content)) }
+    unsafe { Box::from_raw(ffi::janus_plugin_result_new(type_, text, content)) }
 }
 
 /// Destroys a Janus plugin result.
 pub fn destroy_result(result: Box<PluginResult>) {
-    unsafe { janus::janus_plugin_result_destroy(Box::into_raw(result)) }
+    unsafe { ffi::janus_plugin_result_destroy(Box::into_raw(result)) }
 }
 
 #[derive(Debug)]

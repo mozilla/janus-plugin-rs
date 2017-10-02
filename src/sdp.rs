@@ -1,17 +1,17 @@
 extern crate glib_sys as glib;
 extern crate libc;
 
-use super::janus;
-pub use janus::sdp::janus_sdp_generate_answer as generate_answer;
+use super::ffi;
+pub use ffi::sdp::janus_sdp_generate_answer as generate_answer;
 use std::error::Error;
 use std::ffi::{CStr, CString};
 use std::fmt;
 use std::ops::Deref;
 use std::os::raw::c_char;
 
-pub type RawSdp = janus::sdp::janus_sdp;
-pub type MediaType = janus::sdp::janus_sdp_mtype;
-pub type MediaDirection = janus::sdp::janus_sdp_mdirection;
+pub type RawSdp = ffi::sdp::janus_sdp;
+pub type MediaType = ffi::sdp::janus_sdp_mtype;
+pub type MediaDirection = ffi::sdp::janus_sdp_mdirection;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// Available Janus audio codecs. See utils.c.
@@ -110,7 +110,7 @@ impl Deref for Sdp {
 
 impl Drop for Sdp {
     fn drop(&mut self) {
-        unsafe { janus::sdp::janus_sdp_free(self.contents) }
+        unsafe { ffi::sdp::janus_sdp_free(self.contents) }
     }
 }
 
@@ -154,6 +154,7 @@ impl Error for SdpParsingError {
 
 #[macro_export]
 /// Given an SDP offer from a client, generates an SDP answer.
+/// (This has to be a macro because generate_answer is variadic.)
 macro_rules! answer_sdp {
     ($sdp:expr $(, $param:expr, $value:expr),*) => {{
         let result = unsafe {
@@ -171,7 +172,7 @@ macro_rules! answer_sdp {
 pub fn parse_sdp(offer: CString) -> Result<Sdp, Box<Error>> {
     let mut error_buffer = Vec::<u8>::with_capacity(512);
     let error_ptr = error_buffer.as_mut_ptr() as *mut c_char;
-    let result = unsafe { janus::sdp::janus_sdp_parse(offer.as_ptr(), error_ptr, error_buffer.capacity()) };
+    let result = unsafe { ffi::sdp::janus_sdp_parse(offer.as_ptr(), error_ptr, error_buffer.capacity()) };
     if result.is_null() {
         unsafe { error_buffer.set_len(libc::strlen(error_ptr)) }
         Err(Box::new(SdpParsingError {
@@ -186,7 +187,7 @@ pub fn parse_sdp(offer: CString) -> Result<Sdp, Box<Error>> {
 pub fn write_sdp(answer: &Sdp) -> GLibString {
     unsafe {
         GLibString {
-            contents: CStr::from_ptr(janus::sdp::janus_sdp_write(answer.contents)),
+            contents: CStr::from_ptr(ffi::sdp::janus_sdp_write(answer.contents)),
         }
     }
 }

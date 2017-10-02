@@ -3,7 +3,7 @@ extern crate colored;
 
 use self::chrono::Local;
 use self::colored::{Color, Colorize};
-use super::janus;
+use super::ffi;
 use std::ffi::CString;
 use std::fmt::Write;
 
@@ -33,11 +33,11 @@ impl LogLevel {
 
 /// Writes a message at the given log level to the Janus log.
 pub fn log(level: LogLevel, message: &str) {
-    let max_log_level = unsafe { janus::janus_log_level };
+    let max_log_level = unsafe { ffi::janus_log_level };
     if level as i32 <= max_log_level {
         let mut output = String::with_capacity(message.len() + 40);
-        let are_timestamps_enabled = unsafe { janus::janus_log_timestamps == 1 };
-        let are_colors_enabled = unsafe { janus::janus_log_colors == 1 };
+        let are_timestamps_enabled = unsafe { ffi::janus_log_timestamps == 1 };
+        let are_colors_enabled = unsafe { ffi::janus_log_colors == 1 };
         if are_timestamps_enabled {
             write!(output, "{} ", Local::now().format("[%a %b %e %T %Y]")).unwrap();
         }
@@ -52,6 +52,6 @@ pub fn log(level: LogLevel, message: &str) {
         output.push('\n');
 
         let output_cstr = CString::new(output).expect("Log messages must be valid C strings.");
-        unsafe { janus::janus_vprintf(output_cstr.as_ptr()) }
+        unsafe { ffi::janus_vprintf(output_cstr.as_ptr()) }
     }
 }
