@@ -8,7 +8,7 @@ pub use debug::log;
 pub use ffi::JANUS_PLUGIN_API_VERSION as API_VERSION;
 pub use ffi::janus_callbacks as PluginCallbacks;
 pub use ffi::janus_plugin as Plugin;
-pub use ffi::janus_plugin_result as PluginResult;
+pub use ffi::janus_plugin_result as PluginResultInfo;
 pub use ffi::janus_plugin_result_type as PluginResultType;
 pub use ffi::janus_plugin_session as PluginSession;
 pub use jansson_sys::json_t as Json;
@@ -28,12 +28,12 @@ pub fn get_api_error(error: i32) -> &'static str {
 }
 
 /// Allocates a Janus plugin result. Should be destroyed with destroy_result.
-pub fn create_result(type_: PluginResultType, text: *const c_char, content: *mut Json) -> Box<PluginResult> {
+pub fn create_result(type_: PluginResultType, text: *const c_char, content: *mut Json) -> Box<PluginResultInfo> {
     unsafe { Box::from_raw(ffi::janus_plugin_result_new(type_, text, content)) }
 }
 
 /// Destroys a Janus plugin result.
-pub fn destroy_result(result: Box<PluginResult>) {
+pub fn destroy_result(result: Box<PluginResultInfo>) {
     unsafe { ffi::janus_plugin_result_destroy(Box::into_raw(result)) }
 }
 
