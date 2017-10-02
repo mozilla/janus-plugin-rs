@@ -12,18 +12,21 @@ pub use ffi::janus_plugin_result as PluginResultInfo;
 pub use ffi::janus_plugin_result_type as PluginResultType;
 pub use ffi::janus_plugin_session as PluginSession;
 pub use jansson_sys::json_t as Json;
+use std::error::Error;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
 
 pub mod debug;
 pub mod sdp;
 
-/// Converts a Janus gateway error code to an error message.
-pub fn get_api_error(error: i32) -> &'static str {
-    unsafe {
-        CStr::from_ptr(ffi::janus_get_api_error(error))
-            .to_str()
-            .unwrap()
+/// Converts a Janus gateway result code to either success or a potential error.
+pub fn get_result(error: i32) -> Result<(), Box<Error+Send+Sync>> {
+    match error {
+        0 => Ok(()),
+        e => {
+            let msg = unsafe { CStr::from_ptr(ffi::janus_get_api_error(e)).to_str()? };
+            Err(From::from(format!("{} (code: {})", msg, e)))
+        }
     }
 }
 
