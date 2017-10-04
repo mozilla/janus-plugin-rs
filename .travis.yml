@@ -1,6 +1,9 @@
 language: rust
 rust:
   - stable
+script:
+  - cargo build --verbose --all
+  - cargo test --verbose --all
 addons:
   apt:
     packages:

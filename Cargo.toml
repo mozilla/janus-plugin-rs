@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Marshall Quander <marshall@quander.me>"]
 description = "Library for creating plugins for Janus, the WebRTC gateway."
 
+[workspace]
+members = ["janus-plugin-sys", "jansson-sys"]
+
 [dependencies]
 chrono = "0.4"
 colored = "1.5"
