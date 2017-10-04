@@ -18,6 +18,7 @@ use std::os::raw::{c_char, c_int};
 
 pub mod debug;
 pub mod sdp;
+pub mod session;
 
 /// Converts a Janus gateway result code to either success or a potential error.
 pub fn get_result(error: i32) -> Result<(), Box<Error+Send+Sync>> {
