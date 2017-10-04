@@ -14,11 +14,11 @@ janus-plugin = { git = "https://github.com/mquander/janus-plugin-rs" }
 Requires the [Jansson](http://www.digip.org/jansson/) native library (Ubuntu: `libjansson-dev`) to link against; tested as compatible with 2.10.
 
 ```
-$ cargo build
+$ cargo build --all
 ```
 
 ## Testing
 
 ```
-$ cargo test
+$ cargo test --all
 ```
