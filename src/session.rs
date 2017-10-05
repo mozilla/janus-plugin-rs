@@ -38,3 +38,25 @@ impl<T> Deref for SessionHandle<T> {
 
 unsafe impl<T: Sync> Sync for SessionHandle<T> {}
 unsafe impl<T: Send> Send for SessionHandle<T> {}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use std::ptr;
+
+    #[test]
+    fn session_handle_roundtrip() {
+        struct State(i32);
+        let mut handle = PluginHandle {
+            gateway_handle: ptr::null_mut(),
+            plugin_handle: ptr::null_mut(),
+            stopped_bitfield: 0,
+            __padding: Default::default()
+        };
+        let ptr = &mut handle as *mut _;
+        let session = SessionHandle::establish(ptr, State(42));
+        assert_eq!(session.as_ref() as *const _ as *mut _, handle.plugin_handle);
+        assert_eq!(SessionHandle::<State>::from_ptr(ptr).state.0, 42);
+    }
+}
