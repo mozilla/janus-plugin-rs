@@ -3,6 +3,7 @@ name = "janus-plugin"
 version = "0.1.0"
 authors = ["Marshall Quander <marshall@quander.me>"]
 description = "Library for creating plugins for Janus, the WebRTC gateway."
+license = "MPL-2.0"
 
 [workspace]
 members = ["janus-plugin-sys", "jansson-sys"]
