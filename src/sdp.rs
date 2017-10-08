@@ -140,7 +140,7 @@ macro_rules! answer_sdp {
     ($sdp:expr $(, $param:expr, $value:expr),*) => {{
         let result = unsafe {
             $crate::sdp::generate_answer(
-                $sdp.contents,
+                $sdp.ptr,
                 $($param, $value,)*
                 $crate::sdp::OfferAnswerParameters::Done
             )
