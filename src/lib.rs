@@ -15,6 +15,7 @@ pub use ffi::janus_plugin_session as PluginHandle;
 use std::error::Error;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
+use std::ptr;
 
 pub mod debug;
 pub mod sdp;
@@ -33,8 +34,12 @@ pub fn get_result(error: i32) -> Result<(), Box<Error+Send+Sync>> {
 }
 
 /// Allocates a Janus plugin result. Should be destroyed with destroy_result.
-pub fn create_result(type_: PluginResultType, text: *const c_char, content: &JanssonValue) -> Box<PluginResultInfo> {
-    unsafe { Box::from_raw(ffi::janus_plugin_result_new(type_, text, content.ptr)) }
+pub fn create_result(type_: PluginResultType, text: *const c_char, content: Option<&JanssonValue>) -> Box<PluginResultInfo> {
+    let content_ptr = match content {
+        Some(x) => x.ptr,
+        None => ptr::null_mut()
+    };
+    unsafe { Box::from_raw(ffi::janus_plugin_result_new(type_, text, content_ptr)) }
 }
 
 /// Destroys a Janus plugin result.

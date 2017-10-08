@@ -21,8 +21,8 @@ pub struct JanssonValue {
 
 impl JanssonValue {
     /// Creates a wrapper for the given Jansson value.
-    pub fn new(ptr: *mut RawJanssonValue) -> Self {
-        Self { ptr: ptr }
+    pub fn new(ptr: *mut RawJanssonValue) -> Option<Self> {
+        if ptr.is_null() { None } else { Some(Self { ptr: ptr }) }
     }
 
     /// Decodes a JSON string into a Jansson value, returning an error if decoding fails.
@@ -45,7 +45,7 @@ impl JanssonValue {
                 let sli = slice::from_raw_parts(ptr as *mut u8, len);
                 Err(From::from(str::from_utf8(sli)?))
             } else {
-                Ok(JanssonValue::new(result))
+                Ok(JanssonValue::new(result).unwrap())
             }
         }
     }
@@ -73,7 +73,7 @@ impl Deref for JanssonValue {
 impl Clone for JanssonValue {
     fn clone(&self) -> Self {
         unsafe { jansson_sys::json_incref(self.ptr) };
-        Self::new(self.ptr)
+        Self { ptr: self.ptr }
     }
 }
 
