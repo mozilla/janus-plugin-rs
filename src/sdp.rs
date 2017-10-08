@@ -5,9 +5,8 @@ use super::ffi;
 pub use ffi::sdp::janus_sdp_generate_answer as generate_answer;
 use std::error::Error;
 use std::ffi::{CStr, CString};
-use std::fmt;
 use std::ops::Deref;
-use std::os::raw::c_char;
+use std::str;
 
 pub type RawSdp = ffi::sdp::janus_sdp;
 pub type MediaType = ffi::sdp::janus_sdp_mtype;
@@ -91,12 +90,12 @@ pub enum OfferAnswerParameters {
 #[derive(Debug)]
 /// An SDP session description.
 pub struct Sdp {
-    pub contents: *mut RawSdp,
+    pub ptr: *mut RawSdp,
 }
 
 impl Sdp {
     pub fn new(ptr: *mut RawSdp) -> Self {
-        Self { contents: ptr }
+        Self { ptr: ptr }
     }
 }
 
@@ -104,13 +103,13 @@ impl Deref for Sdp {
     type Target = RawSdp;
 
     fn deref(&self) -> &RawSdp {
-        unsafe { &*self.contents }
+        unsafe { &*self.ptr }
     }
 }
 
 impl Drop for Sdp {
     fn drop(&mut self) {
-        unsafe { ffi::sdp::janus_sdp_free(self.contents) }
+        unsafe { ffi::sdp::janus_sdp_free(self.ptr) }
     }
 }
 
@@ -134,24 +133,6 @@ impl<'a> Drop for GLibString<'a> {
     }
 }
 
-#[derive(Debug)]
-/// An error emitted by Janus when attempting to parse a client-supplied SDP.
-pub struct SdpParsingError {
-    pub details: String,
-}
-
-impl fmt::Display for SdpParsingError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.details)
-    }
-}
-
-impl Error for SdpParsingError {
-    fn description(&self) -> &str {
-        &self.details
-    }
-}
-
 #[macro_export]
 /// Given an SDP offer from a client, generates an SDP answer.
 /// (This has to be a macro because generate_answer is variadic.)
@@ -170,16 +151,14 @@ macro_rules! answer_sdp {
 
 /// Parses an SDP offer string from a client into a structured SDP object.
 pub fn parse_sdp(offer: CString) -> Result<Sdp, Box<Error+Send+Sync>> {
-    let mut error_buffer = Vec::<u8>::with_capacity(512);
-    let error_ptr = error_buffer.as_mut_ptr() as *mut c_char;
+    let mut error_buffer = Vec::with_capacity(512);
+    let error_ptr = error_buffer.as_mut_ptr() as *mut _;
     let result = unsafe { ffi::sdp::janus_sdp_parse(offer.as_ptr(), error_ptr, error_buffer.capacity()) };
     if result.is_null() {
         unsafe { error_buffer.set_len(libc::strlen(error_ptr)) }
-        Err(Box::new(SdpParsingError {
-            details: String::from_utf8(error_buffer)?,
-        }))
+        Err(From::from(str::from_utf8(&error_buffer)?))
     } else {
-        Ok(Sdp { contents: result })
+        Ok(Sdp::new(result))
     }
 }
 
@@ -187,7 +166,7 @@ pub fn parse_sdp(offer: CString) -> Result<Sdp, Box<Error+Send+Sync>> {
 pub fn write_sdp(answer: &Sdp) -> GLibString {
     unsafe {
         GLibString {
-            contents: CStr::from_ptr(ffi::sdp::janus_sdp_write(answer.contents)),
+            contents: CStr::from_ptr(ffi::sdp::janus_sdp_write(answer.ptr)),
         }
     }
 }

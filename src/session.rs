@@ -46,7 +46,7 @@ mod tests {
     use std::ptr;
 
     #[test]
-    fn session_handle_roundtrip() {
+    fn handle_round_trip() {
         struct State(i32);
         let mut handle = PluginHandle {
             gateway_handle: ptr::null_mut(),
