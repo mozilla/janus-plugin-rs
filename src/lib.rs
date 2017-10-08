@@ -5,7 +5,7 @@ extern crate janus_plugin_sys as ffi;
 
 pub use debug::LogLevel;
 pub use debug::log;
-pub use jansson::JanssonValue;
+pub use jansson::{JanssonValue, RawJanssonValue};
 pub use ffi::JANUS_PLUGIN_API_VERSION as API_VERSION;
 pub use ffi::janus_callbacks as PluginCallbacks;
 pub use ffi::janus_plugin as Plugin;
