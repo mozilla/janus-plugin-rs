@@ -95,8 +95,8 @@ pub struct Sdp {
 }
 
 impl Sdp {
-    pub fn new(ptr: *mut RawSdp) -> Sdp {
-        Sdp { contents: ptr }
+    pub fn new(ptr: *mut RawSdp) -> Self {
+        Self { contents: ptr }
     }
 }
 

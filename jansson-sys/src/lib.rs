@@ -138,6 +138,22 @@ extern "C" {
     pub fn json_get_alloc_funcs(malloc_fn: *mut json_malloc_t, free_fn: *mut json_free_t);
 }
 
+pub unsafe fn json_incref(json: *mut json_t) -> *mut json_t {
+    if !json.is_null() && (*json).refcount != usize::max_value() {
+        (*json).refcount += 1;
+    }
+    json
+}
+
+pub unsafe fn json_decref(json: *mut json_t) {
+    if !json.is_null() && (*json).refcount != usize::max_value() {
+        (*json).refcount -= 1;
+        if (*json).refcount == 0 {
+            json_delete(json);
+        }
+    }
+}
+
 #[cfg(test)]
 #[macro_use]
 extern crate cstr_macro;
