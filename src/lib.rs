@@ -5,13 +5,13 @@ extern crate janus_plugin_sys as ffi;
 
 pub use debug::LogLevel;
 pub use debug::log;
+pub use jansson::JanssonValue;
 pub use ffi::JANUS_PLUGIN_API_VERSION as API_VERSION;
 pub use ffi::janus_callbacks as PluginCallbacks;
 pub use ffi::janus_plugin as Plugin;
 pub use ffi::janus_plugin_result as PluginResultInfo;
 pub use ffi::janus_plugin_result_type as PluginResultType;
 pub use ffi::janus_plugin_session as PluginHandle;
-pub use jansson_sys::json_t as Json;
 use std::error::Error;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
@@ -19,6 +19,7 @@ use std::os::raw::{c_char, c_int};
 pub mod debug;
 pub mod sdp;
 pub mod session;
+pub mod jansson;
 
 /// Converts a Janus gateway result code to either success or a potential error.
 pub fn get_result(error: i32) -> Result<(), Box<Error+Send+Sync>> {
@@ -32,7 +33,7 @@ pub fn get_result(error: i32) -> Result<(), Box<Error+Send+Sync>> {
 }
 
 /// Allocates a Janus plugin result. Should be destroyed with destroy_result.
-pub fn create_result(type_: PluginResultType, text: *const c_char, content: *mut Json) -> Box<PluginResultInfo> {
+pub fn create_result(type_: PluginResultType, text: *const c_char, content: *mut JanssonValue) -> Box<PluginResultInfo> {
     unsafe { Box::from_raw(ffi::janus_plugin_result_new(type_, text, content)) }
 }
 
