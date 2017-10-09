@@ -5,7 +5,6 @@ use std::ops::Deref;
 use std::error::Error;
 use std::ffi::{CStr, CString};
 use std::mem;
-use std::ptr;
 use std::str;
 use std::slice;
 
@@ -52,12 +51,10 @@ impl JanssonValue {
 
     pub fn to_cstring(self, encoding_flags: usize) -> CString {
         unsafe {
-            let size = jansson_sys::json_dumpb(self.ptr, ptr::null_mut(), 0, encoding_flags);
-            let mut buffer = Vec::with_capacity(size);
-            let output_ptr = buffer.as_mut_ptr() as *mut _;
-            jansson_sys::json_dumpb(self.ptr, output_ptr, size, encoding_flags);
-            buffer.set_len(size);
-            CString::from_vec_unchecked(buffer)
+            let output = jansson_sys::json_dumps(self.ptr, encoding_flags);
+            let result = CStr::from_ptr(output).to_owned();
+            libc::free(output as *mut _);
+            result
         }
     }
 }
