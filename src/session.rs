@@ -1,5 +1,6 @@
 /// Utilities to make it easier to maintain Janus session state between plugin callbacks.
 
+use std::error::Error;
 use std::ops::Deref;
 use std::sync::Arc;
 use super::PluginHandle;
@@ -15,15 +16,27 @@ impl<T> SessionHandle<T> {
 
     /// Allocates a boxed, reference-counted SessionHandle associated with an opaque Janus handle
     /// (whose plugin_handle will then point to the contents of the box).
-    pub fn establish(handle: *mut PluginHandle, state: T) -> Box<Arc<Self>> {
-        let result = Box::new(Arc::new(Self { handle, state: state }));
-        unsafe { (*handle).plugin_handle = result.as_ref() as *const _ as *mut _ };
-        result
+    pub fn associate(handle: *mut PluginHandle, state: T) -> Result<Box<Arc<Self>>, Box<Error+Send+Sync>> {
+        unsafe {
+            match handle.as_mut() {
+                Some(_) => {
+                    let result = Box::new(Arc::new(Self { handle, state: state }));
+                    (*handle).plugin_handle = result.as_ref() as *const _ as *mut _;
+                    Ok(result)
+                },
+                None => Err(From::from("Null handle provided!"))
+            }
+        }
     }
 
     /// Retrieves the reference-counted SessionHandle pointed to by an opaque Janus handle.
-    pub fn from_ptr<'a>(handle: *mut PluginHandle) -> &'a Arc<Self> {
-        unsafe { &*((*handle).plugin_handle as *mut Arc<Self>) }
+    pub fn from_ptr<'a>(handle: *mut PluginHandle) -> Result<Arc<Self>, Box<Error+Send+Sync>> {
+        unsafe {
+            match handle.as_ref() {
+                Some(handle) => Ok(Arc::clone((handle.plugin_handle as *mut Arc<Self>).as_ref().unwrap())),
+                None => Err(From::from("Null handle provided!"))
+            }
+        }
     }
 }
 
@@ -55,8 +68,8 @@ mod tests {
             __padding: Default::default()
         };
         let ptr = &mut handle as *mut _;
-        let session = SessionHandle::establish(ptr, State(42));
+        let session = SessionHandle::associate(ptr, State(42)).unwrap();
         assert_eq!(session.as_ref() as *const _ as *mut _, handle.plugin_handle);
-        assert_eq!(SessionHandle::<State>::from_ptr(ptr).state.0, 42);
+        assert_eq!(SessionHandle::<State>::from_ptr(ptr).unwrap().state.0, 42);
     }
 }
