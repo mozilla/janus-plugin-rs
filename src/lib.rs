@@ -11,7 +11,7 @@ pub use ffi::janus_callbacks as PluginCallbacks;
 pub use ffi::janus_plugin as Plugin;
 pub use ffi::janus_plugin_result as PluginResultInfo;
 pub use ffi::janus_plugin_result_type as PluginResultType;
-pub use ffi::janus_plugin_session as PluginHandle;
+pub use ffi::janus_plugin_session as PluginSession;
 use std::error::Error;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
