@@ -150,7 +150,7 @@ macro_rules! answer_sdp {
 }
 
 /// Parses an SDP offer string from a client into a structured SDP object.
-pub fn parse_sdp(offer: CString) -> Result<Sdp, Box<Error+Send+Sync>> {
+pub fn parse_sdp(offer: CString) -> Result<Sdp, Box<Error>> {
     let mut error_buffer = Vec::with_capacity(512);
     let error_ptr = error_buffer.as_mut_ptr() as *mut _;
     let result = unsafe { ffi::sdp::janus_sdp_parse(offer.as_ptr(), error_ptr, error_buffer.capacity()) };

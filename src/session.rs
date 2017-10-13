@@ -1,9 +1,26 @@
 /// Utilities to make it easier to maintain Janus session state between plugin callbacks.
 
 use std::error::Error;
+use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
 use super::PluginSession;
+
+/// An error indicating that someone handed us a null plugin session handle.
+#[derive(Debug)]
+pub struct NullHandleError;
+
+impl Error for NullHandleError {
+    fn description(&self) -> &str {
+        "A null session handle was provided."
+    }
+}
+
+impl fmt::Display for NullHandleError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(self.description())
+    }
+}
 
 /// A wrapper for a Janus session. Contains a pointer to the Janus PluginSession (which is used to identify
 /// this session in the Janus FFI) and any Rust state associated with the session.
@@ -17,7 +34,7 @@ impl<T> SessionWrapper<T> {
 
     /// Allocates a boxed, reference-counted state wrapper associated with a Janus PluginSession
     /// (whose plugin_handle will then point to the contents of the box).
-    pub fn associate(handle: *mut PluginSession, state: T) -> Result<Box<Arc<Self>>, Box<Error+Send+Sync>> {
+    pub fn associate(handle: *mut PluginSession, state: T) -> Result<Box<Arc<Self>>, NullHandleError> {
         unsafe {
             match handle.as_mut() {
                 Some(x) => {
@@ -25,17 +42,17 @@ impl<T> SessionWrapper<T> {
                     x.plugin_handle = result.as_mut() as *mut Arc<Self> as *mut _;
                     Ok(result)
                 },
-                None => Err(From::from("Null handle provided!"))
+                None => Err(NullHandleError)
             }
         }
     }
 
     /// Retrieves and clones the reference-counted state wrapper associated with a Janus PluginSession.
-    pub fn from_ptr<'a>(handle: *mut PluginSession) -> Result<Arc<Self>, Box<Error+Send+Sync>> {
+    pub fn from_ptr<'a>(handle: *mut PluginSession) -> Result<Arc<Self>, NullHandleError> {
         unsafe {
             match handle.as_ref() {
                 Some(x) => Ok(Arc::clone((x.plugin_handle as *mut Arc<Self>).as_ref().unwrap())),
-                None => Err(From::from("Null handle provided!"))
+                None => Err(NullHandleError)
             }
         }
     }
