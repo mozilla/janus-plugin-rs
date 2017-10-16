@@ -1,3 +1,4 @@
+/// Utilities for writing messages to the Janus log.
 extern crate chrono;
 extern crate colored;
 
@@ -93,13 +94,18 @@ mod tests {
 
     #[test]
     fn log_format_correctness() {
-        assert_eq!("[Tue Oct 10 01:37:46 2017] [WARN] Test message.\n", format_log(
-            LogLevel::Warn, "Test message.", LogParameters {
-                max_log_level: 6,
-                log_timestamps: true,
-                log_colors: false,
-                clock: || fixed_clock(2017, 10, 10, 1, 37, 46)
-            }
-        ))
+        assert_eq!(
+            "[Tue Oct 10 01:37:46 2017] [WARN] Test message.\n",
+            format_log(
+                LogLevel::Warn,
+                "Test message.",
+                LogParameters {
+                    max_log_level: 6,
+                    log_timestamps: true,
+                    log_colors: false,
+                    clock: || fixed_clock(2017, 10, 10, 1, 37, 46),
+                }
+            )
+        )
     }
 }

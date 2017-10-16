@@ -1,17 +1,20 @@
 #![deny(missing_debug_implementations)]
 
+#[macro_use]
+extern crate bitflags;
 extern crate jansson_sys;
 extern crate janus_plugin_sys as ffi;
 
 pub use debug::LogLevel;
 pub use debug::log;
-pub use jansson::{JanssonValue, RawJanssonValue};
 pub use ffi::JANUS_PLUGIN_API_VERSION as API_VERSION;
 pub use ffi::janus_callbacks as PluginCallbacks;
 pub use ffi::janus_plugin as Plugin;
 pub use ffi::janus_plugin_result as PluginResultInfo;
 pub use ffi::janus_plugin_result_type as PluginResultType;
 pub use ffi::janus_plugin_session as PluginSession;
+pub use jansson::{JanssonDecodingFlags, JanssonEncodingFlags, JanssonValue, RawJanssonValue};
+pub use session::SessionWrapper;
 use std::error::Error;
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
@@ -37,7 +40,7 @@ pub fn get_result(error: i32) -> Result<(), Box<Error>> {
 pub fn create_result(type_: PluginResultType, text: *const c_char, content: Option<&JanssonValue>) -> Box<PluginResultInfo> {
     let content_ptr = match content {
         Some(x) => x.ptr,
-        None => ptr::null_mut()
+        None => ptr::null_mut(),
     };
     unsafe { Box::from_raw(ffi::janus_plugin_result_new(type_, text, content_ptr)) }
 }
@@ -63,13 +66,13 @@ pub struct PluginMetadata {
 #[macro_export]
 macro_rules! build_plugin {
     ($md:expr, $($cb:ident),*) => {{
-        extern fn get_api_compatibility() -> c_int { $crate::API_VERSION }
-        extern fn get_version() -> c_int { $md.version }
-        extern fn get_version_string() -> *const c_char { $md.version_str }
-        extern fn get_description() -> *const c_char { $md.description }
-        extern fn get_name() -> *const c_char { $md.name }
-        extern fn get_author() -> *const c_char { $md.author }
-        extern fn get_package() -> *const c_char { $md.package }
+        extern "C" fn get_api_compatibility() -> c_int { $crate::API_VERSION }
+        extern "C" fn get_version() -> c_int { $md.version }
+        extern "C" fn get_version_string() -> *const c_char { $md.version_str }
+        extern "C" fn get_description() -> *const c_char { $md.description }
+        extern "C" fn get_name() -> *const c_char { $md.name }
+        extern "C" fn get_author() -> *const c_char { $md.author }
+        extern "C" fn get_package() -> *const c_char { $md.package }
         $crate::Plugin {
             get_api_compatibility,
             get_version,

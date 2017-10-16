@@ -1,3 +1,4 @@
+/// Utilities to write SDP offers and answers using Janus's SDP parsing machinery.
 extern crate glib_sys as glib;
 extern crate libc;
 
@@ -97,6 +98,28 @@ impl Sdp {
     pub fn new(ptr: *mut RawSdp) -> Self {
         Self { ptr: ptr }
     }
+
+    /// Parses an SDP offer string from a client into a structured SDP object.
+    pub fn parse(offer: CString) -> Result<Self, Box<Error>> {
+        let mut error_buffer = Vec::with_capacity(512);
+        let error_ptr = error_buffer.as_mut_ptr() as *mut _;
+        let result = unsafe { ffi::sdp::janus_sdp_parse(offer.as_ptr(), error_ptr, error_buffer.capacity()) };
+        if result.is_null() {
+            unsafe { error_buffer.set_len(libc::strlen(error_ptr)) }
+            Err(From::from(str::from_utf8(&error_buffer)?))
+        } else {
+            Ok(Sdp::new(result))
+        }
+    }
+
+    /// Writes this SDP into a string.
+    pub fn to_string(&self) -> GLibString {
+        unsafe {
+            GLibString {
+                contents: CStr::from_ptr(ffi::sdp::janus_sdp_write(self.ptr)),
+            }
+        }
+    }
 }
 
 impl Deref for Sdp {
@@ -147,26 +170,4 @@ macro_rules! answer_sdp {
         };
         $crate::sdp::Sdp::new(result)
     }}
-}
-
-/// Parses an SDP offer string from a client into a structured SDP object.
-pub fn parse_sdp(offer: CString) -> Result<Sdp, Box<Error>> {
-    let mut error_buffer = Vec::with_capacity(512);
-    let error_ptr = error_buffer.as_mut_ptr() as *mut _;
-    let result = unsafe { ffi::sdp::janus_sdp_parse(offer.as_ptr(), error_ptr, error_buffer.capacity()) };
-    if result.is_null() {
-        unsafe { error_buffer.set_len(libc::strlen(error_ptr)) }
-        Err(From::from(str::from_utf8(&error_buffer)?))
-    } else {
-        Ok(Sdp::new(result))
-    }
-}
-
-/// Writes a structured SDP object into a string.
-pub fn write_sdp(answer: &Sdp) -> GLibString {
-    unsafe {
-        GLibString {
-            contents: CStr::from_ptr(ffi::sdp::janus_sdp_write(answer.ptr)),
-        }
-    }
 }

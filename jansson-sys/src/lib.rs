@@ -17,30 +17,6 @@ pub enum json_type {
     JSON_NULL = 7,
 }
 
-/// Flags that can be passed to JSON decoding functions.
-#[repr(u32)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum json_decoding_flags {
-    JSON_REJECT_DUPLICATES = 1,
-    JSON_DISABLE_EOF_CHECK = 2,
-    JSON_DECODE_ANY = 4,
-    JSON_DECODE_INT_AS_REAL = 8,
-    JSON_ALLOW_NUL = 16
-}
-
-/// Flags that can be passed to JSON encoding functions.
-#[repr(u32)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum json_encoding_flags {
-    JSON_COMPACT = 32,
-    JSON_ENSURE_ASCII = 64,
-    JSON_SORT_KEYS = 128,
-    JSON_PRESERVE_ORDER = 256,
-    JSON_ENCODE_ANY = 512,
-    JSON_ESCAPE_SLASH = 1024,
-    JSON_EMBED = 65536
-}
-
 /// The maximum possible indentation when pretty-printing JSON.
 pub const JSON_MAX_INDENT: u32 = 31;
 

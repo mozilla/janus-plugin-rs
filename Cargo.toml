@@ -9,6 +9,7 @@ license = "MPL-2.0"
 members = ["janus-plugin-sys", "jansson-sys"]
 
 [dependencies]
+bitflags = "1.0.0"
 chrono = "0.4"
 colored = "1.5"
 cstr-macro = "0.1"
