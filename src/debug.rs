@@ -5,7 +5,6 @@ extern crate colored;
 use self::chrono::{DateTime, Local};
 use self::colored::{Color, Colorize};
 use super::ffi;
-use std::ffi::CString;
 use std::fmt::Write;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -32,7 +31,8 @@ impl LogLevel {
     }
 }
 
-struct LogParameters {
+#[derive(Debug, Clone)]
+pub struct LogParameters {
     pub max_log_level: i32,
     pub log_timestamps: bool,
     pub log_colors: bool,
@@ -52,15 +52,18 @@ impl Default for LogParameters {
     }
 }
 
-fn print_log(level: LogLevel, message: &str, params: LogParameters) {
+/// Writes a message at the given log level to the Janus log, using the provided parameters to control
+/// how the log message is formatted.
+pub fn write_log(level: LogLevel, message: &str, params: LogParameters) {
     if level as i32 <= params.max_log_level {
-        let output = format_log(level, message, params);
-        let output_cstr = CString::new(output).expect("Log messages must be valid C strings.");
-        unsafe { ffi::janus_vprintf(output_cstr.as_ptr()) }
+        let output = print_log(level, message, params);
+        unsafe { ffi::janus_vprintf(output.as_ptr() as *const _) }
     }
 }
 
-fn format_log(level: LogLevel, message: &str, params: LogParameters) -> String {
+/// Prints a message at the given log level into an owned string, using the provided parameters to control
+/// how the log message is formatted.
+pub fn print_log(level: LogLevel, message: &str, params: LogParameters) -> String {
     let mut output = String::with_capacity(message.len() + 40);
     if params.log_timestamps {
         write!(output, "{} ", (params.clock)().format("[%a %b %e %T %Y]")).unwrap();
@@ -79,7 +82,7 @@ fn format_log(level: LogLevel, message: &str, params: LogParameters) -> String {
 
 /// Writes a message at the given log level to the Janus log.
 pub fn log(level: LogLevel, message: &str) {
-    print_log(level, message, LogParameters::default());
+    write_log(level, message, LogParameters::default());
 }
 
 #[cfg(test)]
@@ -96,7 +99,7 @@ mod tests {
     fn log_format_correctness() {
         assert_eq!(
             "[Tue Oct 10 01:37:46 2017] [WARN] Test message.\n",
-            format_log(
+            print_log(
                 LogLevel::Warn,
                 "Test message.",
                 LogParameters {

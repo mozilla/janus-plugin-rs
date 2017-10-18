@@ -1,13 +1,13 @@
 /// Utilities to write SDP offers and answers using Janus's SDP parsing machinery.
-extern crate glib_sys as glib;
-extern crate libc;
 
 use super::ffi;
+use super::libc;
 pub use ffi::sdp::janus_sdp_generate_answer as generate_answer;
 use std::error::Error;
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 use std::ops::Deref;
 use std::str;
+use utils::GLibString;
 
 pub type RawSdp = ffi::sdp::janus_sdp;
 pub type MediaType = ffi::sdp::janus_sdp_mtype;
@@ -91,33 +91,32 @@ pub enum OfferAnswerParameters {
 #[derive(Debug)]
 /// An SDP session description.
 pub struct Sdp {
-    pub ptr: *mut RawSdp,
+    pub ptr: *mut RawSdp, // annoyingly pub because of answer_sdp macro
 }
 
 impl Sdp {
-    pub fn new(ptr: *mut RawSdp) -> Self {
-        Self { ptr: ptr }
+    pub unsafe fn new(ptr: *mut RawSdp) -> Option<Self> {
+        ptr.as_mut().map(|p| Self { ptr: p })
     }
 
     /// Parses an SDP offer string from a client into a structured SDP object.
     pub fn parse(offer: CString) -> Result<Self, Box<Error>> {
         let mut error_buffer = Vec::with_capacity(512);
         let error_ptr = error_buffer.as_mut_ptr() as *mut _;
-        let result = unsafe { ffi::sdp::janus_sdp_parse(offer.as_ptr(), error_ptr, error_buffer.capacity()) };
-        if result.is_null() {
-            unsafe { error_buffer.set_len(libc::strlen(error_ptr)) }
-            Err(From::from(str::from_utf8(&error_buffer)?))
-        } else {
-            Ok(Sdp::new(result))
+        unsafe {
+            let result = ffi::sdp::janus_sdp_parse(offer.as_ptr(), error_ptr, error_buffer.capacity());
+            Sdp::new(result).ok_or_else(|| {
+                error_buffer.set_len(libc::strlen(error_ptr));
+                From::from(str::from_utf8(&error_buffer).expect("SDP error not valid UTF-8 :("))
+            })
         }
     }
 
     /// Writes this SDP into a string.
     pub fn to_string(&self) -> GLibString {
         unsafe {
-            GLibString {
-                contents: CStr::from_ptr(ffi::sdp::janus_sdp_write(self.ptr)),
-            }
+            let sdp = ffi::sdp::janus_sdp_write(self.ptr);
+            GLibString::from_chars(sdp).expect("Mysterious error writing SDP to string :(")
         }
     }
 }
@@ -136,38 +135,20 @@ impl Drop for Sdp {
     }
 }
 
-#[derive(Debug)]
-/// A C-style string which was allocated using glibc.
-pub struct GLibString<'a> {
-    pub contents: &'a CStr,
-}
-
-impl<'a> Deref for GLibString<'a> {
-    type Target = CStr;
-
-    fn deref(&self) -> &CStr {
-        return self.contents;
-    }
-}
-
-impl<'a> Drop for GLibString<'a> {
-    fn drop(&mut self) {
-        unsafe { glib::g_free(self.contents.as_ptr() as *mut _) }
-    }
-}
+unsafe impl Send for Sdp {}
 
 #[macro_export]
 /// Given an SDP offer from a client, generates an SDP answer.
 /// (This has to be a macro because generate_answer is variadic.)
 macro_rules! answer_sdp {
     ($sdp:expr $(, $param:expr, $value:expr),*) => {{
-        let result = unsafe {
-            $crate::sdp::generate_answer(
+        unsafe {
+            let result = $crate::sdp::generate_answer(
                 $sdp.ptr,
                 $($param, $value,)*
                 $crate::sdp::OfferAnswerParameters::Done
-            )
-        };
-        $crate::sdp::Sdp::new(result)
+            );
+            $crate::sdp::Sdp::new(result).expect("Mysterious error generating SDP answer :(")
+        }
     }}
 }

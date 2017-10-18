@@ -4,6 +4,8 @@
 extern crate bitflags;
 extern crate jansson_sys;
 extern crate janus_plugin_sys as ffi;
+extern crate glib_sys as glib;
+extern crate libc;
 
 pub use debug::LogLevel;
 pub use debug::log;
@@ -24,6 +26,7 @@ pub mod debug;
 pub mod sdp;
 pub mod session;
 pub mod jansson;
+pub mod utils;
 
 /// Converts a Janus gateway result code to either success or a potential error.
 pub fn get_result(error: i32) -> Result<(), Box<Error>> {
@@ -37,9 +40,9 @@ pub fn get_result(error: i32) -> Result<(), Box<Error>> {
 }
 
 /// Allocates a Janus plugin result. Should be destroyed with destroy_result.
-pub fn create_result(type_: PluginResultType, text: *const c_char, content: Option<&JanssonValue>) -> Box<PluginResultInfo> {
+pub fn create_result(type_: PluginResultType, text: *const c_char, content: Option<JanssonValue>) -> Box<PluginResultInfo> {
     let content_ptr = match content {
-        Some(x) => x.ptr,
+        Some(x) => x.into_raw(),
         None => ptr::null_mut(),
     };
     unsafe { Box::from_raw(ffi::janus_plugin_result_new(type_, text, content_ptr)) }

@@ -8,6 +8,7 @@ use std::mem;
 use std::ops::Deref;
 use std::slice;
 use std::str;
+use utils::LibcString;
 
 /// A pointer to a raw Jansson value struct.
 pub type RawJanssonValue = jansson_sys::json_t;
@@ -40,24 +41,33 @@ bitflags! {
 /// of the underlying value when cloned/dropped.
 #[derive(Debug)]
 pub struct JanssonValue {
-    pub ptr: *mut RawJanssonValue,
+    ptr: *mut RawJanssonValue,
 }
 
 impl JanssonValue {
     /// Creates a wrapper for the given Jansson value.
-    pub fn new(ptr: *mut RawJanssonValue) -> Option<Self> {
-        if ptr.is_null() {
-            None
-        } else {
-            Some(Self { ptr: ptr })
-        }
+    pub unsafe fn new(ptr: *mut RawJanssonValue) -> Option<Self> {
+        ptr.as_mut().map(|p| Self { ptr: p })
     }
 
-    /// Decodes a JSON string into a Jansson value, returning an error if decoding fails.
+    /// Gets the reference backing this value without taking ownership.
+    pub fn as_mut_ref(&self) -> &mut RawJanssonValue {
+        unsafe { self.ptr.as_mut().unwrap() }
+    }
+
+    /// Transfers ownership of this value to this pointer. The consumer of the pointer is responsible for calling
+    /// json_decref on it later.
+    pub fn into_raw(self) -> *mut RawJanssonValue {
+        unsafe { jansson_sys::json_incref(self.ptr) };
+        self.ptr
+    }
+
+    /// Decodes a JSON string slice into a Jansson value, returning an error if decoding fails.
     pub fn from_str(input: &str, decoding_flags: JanssonDecodingFlags) -> Result<Self, Box<Error + Send + Sync>> {
         Self::from_cstr(&CString::new(input)?, decoding_flags)
     }
 
+    /// Decodes a JSON C-style string into a Jansson value, returning an error if decoding fails.
     pub fn from_cstr(input: &CStr, decoding_flags: JanssonDecodingFlags) -> Result<Self, Box<Error + Send + Sync>> {
         unsafe {
             let mut error: jansson_sys::json_error_t = mem::uninitialized();
@@ -74,15 +84,17 @@ impl JanssonValue {
         }
     }
 
+    /// Encodes this Jansson value as a JSON owned string.
     pub fn to_string(self, encoding_flags: JanssonEncodingFlags) -> String {
         let cstring = self.to_libcstring(encoding_flags);
-        cstring.to_str().expect("Null bytes in Jansson output; what's going on?").to_owned()
+        cstring.to_str().expect("Null bytes in Jansson output :(").to_owned()
     }
 
+    /// Encodes this Jansson value as a JSON owned C-style string.
     pub fn to_libcstring(self, encoding_flags: JanssonEncodingFlags) -> LibcString {
         unsafe {
-            let output = jansson_sys::json_dumps(self.ptr, encoding_flags.bits());
-            LibcString { contents: CStr::from_ptr(output) as *const _ as *mut _ }
+            let json = jansson_sys::json_dumps(self.ptr, encoding_flags.bits());
+            LibcString::from_chars(json).expect("Error writing JSON output from Jansson value :(")
         }
     }
 }
@@ -108,25 +120,7 @@ impl Drop for JanssonValue {
     }
 }
 
-/// A C-style string which was allocated using libc.
-#[derive(Debug)]
-pub struct LibcString {
-    contents: *mut CStr,
-}
-
-impl Deref for LibcString {
-    type Target = CStr;
-
-    fn deref(&self) -> &CStr {
-        unsafe { &*self.contents }
-    }
-}
-
-impl Drop for LibcString {
-    fn drop(&mut self) {
-        unsafe { libc::free(self.contents as *mut _) }
-    }
-}
+unsafe impl Send for JanssonValue {}
 
 #[cfg(test)]
 mod tests {
