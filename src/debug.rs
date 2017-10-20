@@ -5,6 +5,7 @@ extern crate colored;
 use self::chrono::{DateTime, Local};
 use self::colored::{Color, Colorize};
 use super::ffi;
+use std::ffi::CString;
 use std::fmt::Write;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -56,8 +57,8 @@ impl Default for LogParameters {
 /// how the log message is formatted.
 pub fn write_log(level: LogLevel, message: &str, params: LogParameters) {
     if level as i32 <= params.max_log_level {
-        let output = print_log(level, message, params);
-        unsafe { ffi::janus_vprintf(output.as_ptr() as *const _) }
+        let output = CString::new(print_log(level, message, params)).expect("Null character in log message :(");
+        unsafe { ffi::janus_vprintf(output.as_ptr()) }
     }
 }
 
