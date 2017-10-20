@@ -3,6 +3,7 @@
 use super::ffi;
 use super::libc;
 pub use ffi::sdp::janus_sdp_generate_answer as generate_answer;
+use std::collections::HashMap;
 use std::error::Error;
 use std::ffi::CString;
 use std::ops::Deref;
@@ -10,8 +11,9 @@ use std::str;
 use utils::GLibString;
 
 pub type RawSdp = ffi::sdp::janus_sdp;
-pub type MediaType = ffi::sdp::janus_sdp_mtype;
-pub type MediaDirection = ffi::sdp::janus_sdp_mdirection;
+pub type RawMLine = ffi::sdp::janus_sdp_mline;
+pub use ffi::sdp::janus_sdp_mtype as MediaType;
+pub use ffi::sdp::janus_sdp_mdirection as MediaDirection;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// Available Janus audio codecs. See utils.c.
@@ -110,6 +112,23 @@ impl Sdp {
                 From::from(str::from_utf8(&error_buffer).expect("SDP error not valid UTF-8 :("))
             })
         }
+    }
+
+    pub fn get_mlines(&self) -> HashMap<MediaType, Vec<&RawMLine>> {
+        let mut result = HashMap::new();
+        unsafe {
+            let mut ml_node = (*self.ptr).m_lines;
+            loop {
+                match ml_node.as_ref() {
+                    None => return result,
+                    Some(node) => {
+                        let ml = (node.data as *const RawMLine).as_ref().expect("Null data in SDP media node :(");
+                        result.entry(ml.type_).or_insert_with(Vec::new).push(ml);
+                        ml_node = node.next;
+                    }
+                }
+            }
+	}
     }
 
     /// Writes this SDP into a string.
