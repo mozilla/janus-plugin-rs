@@ -12,13 +12,15 @@ pub use debug::log;
 pub use ffi::JANUS_PLUGIN_API_VERSION as API_VERSION;
 pub use ffi::janus_callbacks as PluginCallbacks;
 pub use ffi::janus_plugin as Plugin;
-pub use ffi::janus_plugin_result as PluginResultInfo;
+pub use ffi::janus_plugin_result as RawPluginResult;
 pub use ffi::janus_plugin_result_type as PluginResultType;
 pub use ffi::janus_plugin_session as PluginSession;
 pub use jansson::{JanssonDecodingFlags, JanssonEncodingFlags, JanssonValue, RawJanssonValue};
 pub use session::SessionWrapper;
 use std::error::Error;
 use std::ffi::CStr;
+use std::mem;
+use std::ops::Deref;
 use std::os::raw::{c_char, c_int};
 use std::ptr;
 
@@ -39,19 +41,46 @@ pub fn get_result(error: i32) -> Result<(), Box<Error>> {
     }
 }
 
-/// Allocates a Janus plugin result. Should be destroyed with destroy_result.
-pub fn create_result(type_: PluginResultType, text: *const c_char, content: Option<JanssonValue>) -> Box<PluginResultInfo> {
-    let content_ptr = match content {
-        Some(x) => x.into_raw(),
-        None => ptr::null_mut(),
-    };
-    unsafe { Box::from_raw(ffi::janus_plugin_result_new(type_, text, content_ptr)) }
+/// A Janus plugin result; what a plugin returns to the gateway as a direct response to a signalling message.
+#[derive(Debug)]
+pub struct PluginResult {
+    ptr: *mut RawPluginResult,
 }
 
-/// Destroys a Janus plugin result.
-pub fn destroy_result(result: Box<PluginResultInfo>) {
-    unsafe { ffi::janus_plugin_result_destroy(Box::into_raw(result)) }
+impl PluginResult {
+    /// Creates a new plugin result.
+    pub fn new(type_: PluginResultType, text: *const c_char, content: Option<JanssonValue>) -> Self {
+        let content_ptr = match content {
+            Some(x) => x.into_raw(),
+            None => ptr::null_mut(),
+        };
+        Self { ptr: unsafe { ffi::janus_plugin_result_new(type_, text, content_ptr) } }
+    }
+
+    /// Transfers ownership of this result to the wrapped raw pointer. The consumer is responsible for calling
+    /// janus_plugin_result_destroy on the pointer when finished.
+    pub fn into_raw(self) -> *mut RawPluginResult {
+        let ptr = self.ptr;
+        mem::forget(self);
+        ptr
+    }
 }
+
+impl Deref for PluginResult {
+    type Target = RawPluginResult;
+
+    fn deref(&self) -> &RawPluginResult {
+        unsafe { &*self.ptr }
+    }
+}
+
+impl Drop for PluginResult {
+    fn drop(&mut self) {
+        unsafe { ffi::janus_plugin_result_destroy(self.ptr) }
+    }
+}
+
+unsafe impl Send for PluginResult {}
 
 #[derive(Debug)]
 /// Represents metadata about this plugin which Janus can query at runtime.
