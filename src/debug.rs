@@ -71,8 +71,8 @@ pub fn print_log(level: LogLevel, message: &str, params: LogParameters) -> Strin
     }
     if level <= LogLevel::Warn {
         let name = format!("[{:?}] ", level).to_uppercase();
-        match (params.log_colors, level.color()) {
-            (true, Some(c)) => output.push_str(&name.color(c)),
+        match level.color() {
+            Some(c) if params.log_colors => output.push_str(&name.color(c)),
             _ => output.push_str(&name),
         }
     }
