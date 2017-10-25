@@ -4,11 +4,11 @@
 [![janus-plugin](https://img.shields.io/crates/v/janus-plugin.svg)](https://crates.io/crates/janus-plugin)
 [![Build Status](https://travis-ci.org/mquander/janus-plugin-rs.svg?branch=master)](https://travis-ci.org/mquander/janus-plugin-rs)
 
-Library for creating Rust plugins to [Janus](https://janus.conf.meetecho.com/). Still highly unstable, so not published.
+Library for creating Rust plugins to [Janus](https://janus.conf.meetecho.com/). Still highly unstable.
 
 ``` toml
 [dependencies]
-janus-plugin = { git = "https://github.com/mquander/janus-plugin-rs" }
+janus-plugin = "0.2.0"
 ```
 
 ## Building
