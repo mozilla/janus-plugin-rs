@@ -1,10 +1,12 @@
 #![allow(non_camel_case_types)]
 #![deny(missing_debug_implementations)]
 
+extern crate glib_sys;
 extern crate jansson_sys;
 use jansson_sys::json_t;
 use std::os::raw::{c_char, c_int, c_void};
 
+pub mod rtcp;
 pub mod sdp;
 
 pub const JANUS_PLUGIN_API_VERSION: c_int = 8;

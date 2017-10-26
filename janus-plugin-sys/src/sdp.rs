@@ -1,8 +1,6 @@
 #![allow(non_camel_case_types)]
 
-extern crate glib_sys;
-
-use self::glib_sys::{gboolean, GList};
+use super::glib_sys::{gboolean, GList};
 use std::os::raw::{c_char, c_int, c_long, c_short, c_ulong};
 
 pub type guint16 = c_short;

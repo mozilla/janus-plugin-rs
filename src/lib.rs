@@ -25,6 +25,7 @@ use std::os::raw::{c_char, c_int};
 use std::ptr;
 
 pub mod debug;
+pub mod rtcp;
 pub mod sdp;
 pub mod session;
 pub mod jansson;
