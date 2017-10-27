@@ -104,12 +104,70 @@ mod tests {
                 LogLevel::Warn,
                 "Test message.",
                 LogParameters {
-                    max_log_level: 6,
                     log_timestamps: true,
-                    log_colors: false,
-                    clock: || fixed_clock(2017, 10, 10, 1, 37, 46),
+                    ..default_log_parameters()
                 }
             )
         )
+    }
+
+    #[test]
+    fn log_colored_output() {
+        assert_eq!(
+            "\u{1b}[35m[FATAL] \u{1b}[0mCrash!\n",
+            print_log(
+                LogLevel::Fatal,
+                "Crash!",
+                LogParameters {
+                    log_colors: true,
+                    ..default_log_parameters()
+                }
+            )
+        );
+
+        assert_eq!(
+            "\u{1b}[31m[ERR] \u{1b}[0mAn error occurred!\n",
+            print_log(
+                LogLevel::Err,
+                "An error occurred!",
+                LogParameters {
+                    log_colors: true,
+                    ..default_log_parameters()
+                }
+            )
+        );
+
+        assert_eq!(
+            "\u{1b}[33m[WARN] \u{1b}[0mAttention!\n",
+            print_log(
+                LogLevel::Warn,
+                "Attention!",
+                LogParameters {
+                    log_colors: true,
+                    ..default_log_parameters()
+                }
+            )
+        );
+
+        assert_eq!(
+            "Just a message.\n",
+            print_log(
+                LogLevel::Info,
+                "Just a message.",
+                LogParameters {
+                    log_colors: true,
+                    ..default_log_parameters()
+                }
+            )
+        );
+    }
+
+    fn default_log_parameters() -> LogParameters {
+        LogParameters {
+            max_log_level: 6,
+            log_timestamps: false,
+            log_colors: false,
+            clock: || fixed_clock(2017, 10, 10, 1, 37, 46),
+        }
     }
 }
