@@ -70,14 +70,14 @@ pub fn print_log(level: LogLevel, message: &str, params: LogParameters) -> Strin
         write!(output, "{} ", (params.clock)().format("[%a %b %e %T %Y]")).unwrap();
     }
     if level <= LogLevel::Warn {
-        let name = format!("[{:?}] ", level).to_uppercase();
-        match level.color() {
-            Some(c) if params.log_colors => output.push_str(&name.color(c)),
-            _ => output.push_str(&name),
-        }
+        let prefix = format!("[{:?}] ", level).to_uppercase();
+        let prefix = match level.color() {
+            Some(c) if params.log_colors => format!("{}", prefix.color(c)),
+            _ => prefix,
+        };
+        write!(output, "{}", prefix).unwrap();
     }
-    output.push_str(message);
-    output.push('\n');
+    write!(output, "{}\n", message).unwrap();
     output
 }
 
