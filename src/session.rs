@@ -1,6 +1,7 @@
 /// Utilities to make it easier to maintain Janus session state between plugin callbacks.
 use super::PluginSession;
 use std::error::Error;
+use std::hash::{Hash, Hasher};
 use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -23,11 +24,25 @@ impl fmt::Display for NullHandleError {
 
 /// A wrapper for a Janus session. Contains a pointer to the Janus PluginSession (which is used to identify
 /// this session in the Janus FFI) and any Rust state associated with the session.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SessionWrapper<T> {
     pub handle: *mut PluginSession,
     state: T,
 }
+
+impl<T> Hash for SessionWrapper<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.handle.hash(state);
+    }
+}
+
+impl<T> PartialEq for SessionWrapper<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.handle == other.handle
+    }
+}
+
+impl<T> Eq for SessionWrapper<T> {}
 
 impl<T> SessionWrapper<T> {
     /// Allocates a boxed, reference-counted state wrapper associated with a Janus PluginSession
@@ -46,15 +61,20 @@ impl<T> SessionWrapper<T> {
     }
 
     /// Retrieves and clones the reference-counted state wrapper associated with a Janus PluginSession.
-    pub fn from_ptr<'a>(handle: *mut PluginSession) -> Result<Arc<Self>, NullHandleError> {
+    pub fn from_ptr(handle: *mut PluginSession) -> Result<Arc<Self>, NullHandleError> {
         unsafe {
             match handle.as_ref() {
                 Some(x) => Ok(Arc::clone(
-                    (x.plugin_handle as *mut Arc<Self>).as_ref().unwrap(),
+                    (x.plugin_handle as *mut Arc<Self>).as_ref().unwrap()
                 )),
                 None => Err(NullHandleError),
             }
         }
+    }
+
+    /// Returns the opaque pointer for this session.
+    pub fn as_ptr(&self) -> *mut PluginSession {
+        self.handle
     }
 }
 
