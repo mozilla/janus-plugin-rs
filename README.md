@@ -8,7 +8,7 @@ Library for creating Rust plugins to [Janus](https://janus.conf.meetecho.com/). 
 
 ``` toml
 [dependencies]
-janus-plugin = "0.2.0"
+janus-plugin = "0.3.0"
 ```
 
 ## Building
