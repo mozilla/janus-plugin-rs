@@ -6,6 +6,10 @@ description = "Library for creating plugins for Janus, the WebRTC gateway."
 repository = "https://github.com/mquander/janus-plugin-rs"
 license = "MPL-2.0"
 
+[features]
+default = []
+refcount = ["janus-plugin-sys/refcount"] # compatible with the Janus refcount branch rather than stable branch
+
 [workspace]
 members = ["janus-plugin-sys", "jansson-sys"]
 

@@ -9,7 +9,11 @@ use std::os::raw::{c_char, c_int, c_void};
 pub mod rtcp;
 pub mod sdp;
 
+#[cfg(not(feature="refcount"))]
 pub const JANUS_PLUGIN_API_VERSION: c_int = 8;
+
+#[cfg(feature="refcount")]
+pub const JANUS_PLUGIN_API_VERSION: c_int = 9;
 
 #[repr(i32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -19,6 +23,7 @@ pub enum janus_plugin_result_type {
     JANUS_PLUGIN_OK_WAIT = 1,
 }
 
+#[cfg(not(feature="refcount"))]
 #[repr(C)]
 #[derive(Debug)]
 pub struct janus_plugin_session {
@@ -26,6 +31,24 @@ pub struct janus_plugin_session {
     pub plugin_handle: *mut c_void,
     pub stopped_bitfield: u8, // todo: clean this up
     pub __padding: [u8; 7usize],
+}
+
+#[cfg(feature="refcount")]
+#[repr(C)]
+#[derive(Debug)]
+pub struct janus_plugin_session {
+    pub gateway_handle: *mut c_void,
+    pub plugin_handle: *mut c_void,
+    pub stopped: c_int,
+    pub _ref: janus_refcount,
+}
+
+#[cfg(feature="refcount")]
+#[repr(C)]
+#[derive(Debug)]
+pub struct janus_refcount {
+    pub count: c_int,
+    pub free: extern "C" fn(obj: *const janus_refcount),
 }
 
 #[repr(C)]

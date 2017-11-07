@@ -6,6 +6,10 @@ description = "Native bindings to the Janus plugin API."
 repository = "https://github.com/mquander/janus-plugin-rs"
 license = "MPL-2.0"
 
+[features]
+default = []
+refcount = [] # compatible with the Janus refcount branch rather than stable branch
+
 [dependencies]
 glib-sys = "0.4"
 jansson-sys = { path = "../jansson-sys", version = "0.1.0" }
