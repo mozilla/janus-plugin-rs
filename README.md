@@ -8,8 +8,16 @@ Library for creating Rust plugins to [Janus](https://janus.conf.meetecho.com/). 
 
 ``` toml
 [dependencies]
-janus-plugin = "0.3.0"
+janus-plugin = "0.4.0"
 ```
+
+If you want to build a version compatible with the Janus refcount branch instead of stable master:
+
+``` toml
+[dependencies]
+janus-plugin = { version = "0.4.0", features = ["refcount"] }
+```
+
 
 ## Building
 
