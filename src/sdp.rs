@@ -223,7 +223,7 @@ unsafe impl Send for Sdp {}
 /// Given an SDP offer from a client, generates an SDP answer.
 /// (This has to be a macro because generate_answer is variadic.)
 macro_rules! answer_sdp {
-    ($sdp:expr $(, $param:expr, $value:expr),*) => {{
+    ($sdp:expr $(, $param:expr, $value:expr)* $(,)*) => {{
         unsafe {
             let result = $crate::sdp::generate_answer(
                 $sdp.ptr,
