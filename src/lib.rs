@@ -2,6 +2,8 @@
 
 #[macro_use]
 extern crate bitflags;
+#[macro_use]
+extern crate cstr_macro;
 extern crate jansson_sys;
 extern crate janus_plugin_sys as ffi;
 extern crate glib_sys as glib;

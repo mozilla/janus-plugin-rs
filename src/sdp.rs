@@ -1,19 +1,24 @@
 /// Utilities to write SDP offers and answers using Janus's SDP parsing machinery.
 
 use super::ffi;
+use super::glib;
 use super::libc;
 pub use ffi::sdp::janus_sdp_generate_answer as generate_answer;
 use std::collections::HashMap;
 use std::error::Error;
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::ops::Deref;
 use std::str;
 use utils::GLibString;
 
 pub type RawSdp = ffi::sdp::janus_sdp;
 pub type RawMLine = ffi::sdp::janus_sdp_mline;
+pub type RawAttribute = ffi::sdp::janus_sdp_attribute;
 pub use ffi::sdp::janus_sdp_mtype as MediaType;
 pub use ffi::sdp::janus_sdp_mdirection as MediaDirection;
+
+/// SDP attributes which may refer to a specific RTP payload type.
+static MEDIA_PAYLOAD_ATTRIBUTES: [&'static str; 3] = ["rtpmap", "fmtp", "rtcp-fb"];
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// Available Janus audio codecs. See utils.c.
@@ -28,13 +33,18 @@ pub enum AudioCodec {
 
 impl AudioCodec {
     pub fn to_str(&self) -> &'static str {
-        match *self {
-            AudioCodec::Opus => "opus",
-            AudioCodec::Pcmu => "pcmu",
-            AudioCodec::Pcma => "pcma",
-            AudioCodec::G722 => "g722",
-            AudioCodec::Isac16 => "isac16",
-            AudioCodec::Isac32 => "isac32",
+        self.to_cstr().to_str().unwrap()
+    }
+    pub fn to_cstr(&self) -> &'static CStr {
+        unsafe {
+            CStr::from_ptr(match *self {
+                AudioCodec::Opus => cstr!("opus"),
+                AudioCodec::Pcmu => cstr!("pcmu"),
+                AudioCodec::Pcma => cstr!("pcma"),
+                AudioCodec::G722 => cstr!("g722"),
+                AudioCodec::Isac16 => cstr!("isac16"),
+                AudioCodec::Isac32 => cstr!("isac32"),
+            })
         }
     }
 }
@@ -49,10 +59,15 @@ pub enum VideoCodec {
 
 impl VideoCodec {
     pub fn to_str(&self) -> &'static str {
-        match *self {
-            VideoCodec::Vp8 => "vp8",
-            VideoCodec::Vp9 => "vp9",
-            VideoCodec::H264 => "h264",
+        self.to_cstr().to_str().unwrap()
+    }
+    pub fn to_cstr(&self) -> &'static CStr {
+        unsafe {
+            CStr::from_ptr(match *self {
+                VideoCodec::Vp8 => cstr!("vp8"),
+                VideoCodec::Vp9 => cstr!("vp9"),
+                VideoCodec::H264 => cstr!("h264"),
+            })
         }
     }
 }
@@ -114,20 +129,68 @@ impl Sdp {
         }
     }
 
-    pub fn get_mlines(&self) -> HashMap<MediaType, Vec<&RawMLine>> {
-        let mut result = HashMap::new();
+    /// Gets the payload type number for a codec in this SDP, or None if the codec isn't present.
+    pub fn get_payload_type(&self, codec_name: &CStr) -> Option<i32> {
         unsafe {
-            let mut ml_node = (*self.ptr).m_lines;
-            loop {
-                match ml_node.as_ref() {
-                    None => return result,
-                    Some(node) => {
-                        let ml = (node.data as *const RawMLine).as_ref().expect("Null data in SDP media node :(");
-                        result.entry(ml.type_).or_insert_with(Vec::new).push(ml);
-                        ml_node = node.next;
+            match ffi::sdp::janus_sdp_get_codec_pt(self.ptr, codec_name.as_ptr()) {
+                err if err < 0 => None,
+                n => Some(n),
+            }
+        }
+    }
+
+    /// Rewrites any references from one dynamically assigned payload type in this SDP to another dynamically assigned
+    /// payload type.
+    pub fn rewrite_payload_type(&mut self, from: i32, to: i32) {
+        let from_pt_string = from.to_string();
+        let to_pt_string = to.to_string();
+        for (_media, m_lines) in self.get_mlines() {
+            unsafe {
+                for m_line in m_lines {
+                    // 1. replace the payload type ID in this media line's payload type list
+                    if !glib::g_list_find(m_line.ptypes, from as *const _).is_null() {
+                        // payload type data in the list is cast to pointers
+                        m_line.ptypes = glib::g_list_remove(m_line.ptypes, from as *const _);
+                        m_line.ptypes = glib::g_list_prepend(m_line.ptypes, to as *mut _);
+                    }
+                    // 2. rewrite the values of attribute lines with the old payload type to have the new payload type
+                    let mut attr_node = m_line.attributes;
+                    while let Some(node) = attr_node.as_ref() {
+                        let next = node.next; // we might delete this link, so grab next now!
+                        let attr = (node.data as *const RawAttribute).as_ref().expect("Null data in SDP attribute node :(");
+                        let name = CStr::from_ptr(attr.name).to_str().expect("Invalid attribute name in SDP :(");
+                        if MEDIA_PAYLOAD_ATTRIBUTES.contains(&name) {
+                            // each of the attributes with payload types in the values look like "$pt $stuff"
+                            // where $stuff is specifying payload-type-specfic options; just rewrite $pt
+                            let value = CStr::from_ptr(attr.value).to_str().expect("Invalid attribute value in SDP :(");
+                            if value.starts_with(&from_pt_string) {
+                                let new_val = value.replacen(&from_pt_string, &to_pt_string, 1);
+                                let new_attr = ffi::sdp::janus_sdp_attribute_create(
+                                    attr.name,
+                                    CString::new(new_val).unwrap().as_ptr() // copied into the attribute
+                                );
+                                m_line.attributes = glib::g_list_prepend(m_line.attributes, new_attr as *mut _);
+                                m_line.attributes = glib::g_list_delete_link(m_line.attributes, attr_node);
+                            }
+                        }
+                        attr_node = next;
                     }
                 }
             }
+        }
+    }
+
+    /// Returns a map of all the SDP media lines per SDP media type.
+    pub fn get_mlines(&self) -> HashMap<MediaType, Vec<&mut RawMLine>> {
+        let mut result = HashMap::new();
+        unsafe {
+            let mut ml_node = (*self.ptr).m_lines;
+            while let Some(node) = ml_node.as_ref() {
+                let ml = (node.data as *mut RawMLine).as_mut().expect("Null data in SDP media node :(");
+                result.entry(ml.type_).or_insert_with(Vec::new).push(ml);
+                ml_node = node.next;
+            }
+            return result;
 	}
     }
 
