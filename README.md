@@ -4,7 +4,7 @@
 [![janus-plugin](https://img.shields.io/crates/v/janus-plugin.svg)](https://crates.io/crates/janus-plugin)
 [![Build Status](https://travis-ci.org/mquander/janus-plugin-rs.svg?branch=master)](https://travis-ci.org/mquander/janus-plugin-rs)
 
-Library for creating Rust plugins to [Janus](https://janus.conf.meetecho.com/). Still highly unstable.
+Library for creating Rust plugins to [Janus](https://janus.conf.meetecho.com/). Still moderately unstable.
 
 ``` toml
 [dependencies]
@@ -32,3 +32,10 @@ $ cargo build --all
 ```
 $ cargo test --all
 ```
+
+## Examples
+
+Here are some projects which are using these bindings:
+
+* https://github.com/mquander/janus-plugin-sfu
+* https://github.com/ivanovaleksey/janus-echotest-rs
