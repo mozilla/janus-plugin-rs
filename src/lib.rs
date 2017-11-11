@@ -20,7 +20,7 @@ pub use ffi::janus_plugin_session as PluginSession;
 pub use jansson::{JanssonDecodingFlags, JanssonEncodingFlags, JanssonValue, RawJanssonValue};
 pub use session::SessionWrapper;
 use std::error::Error;
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 use std::mem;
 use std::ops::Deref;
 use std::os::raw::{c_char, c_int};
@@ -52,12 +52,16 @@ pub struct PluginResult {
 
 impl PluginResult {
     /// Creates a new plugin result.
-    pub fn new(type_: PluginResultType, text: *const c_char, content: Option<JanssonValue>) -> Self {
+    pub fn new(type_: PluginResultType, text: Option<String>, content: Option<JanssonValue>) -> Self {
+        let text_ptr = match text {
+            Some(x) => CString::new(x).unwrap().as_ptr(),
+            None => ptr::null(),
+        };
         let content_ptr = match content {
             Some(x) => x.into_raw(),
             None => ptr::null_mut(),
         };
-        Self { ptr: unsafe { ffi::janus_plugin_result_new(type_, text, content_ptr) } }
+        Self { ptr: unsafe { ffi::janus_plugin_result_new(type_, text_ptr, content_ptr) } }
     }
 
     /// Transfers ownership of this result to the wrapped raw pointer. The consumer is responsible for calling
