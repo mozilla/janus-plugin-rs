@@ -57,8 +57,10 @@ impl Default for LogParameters {
 /// how the log message is formatted.
 pub fn write_log(level: LogLevel, message: &str, params: LogParameters) {
     if level as i32 <= params.max_log_level {
-        let output = CString::new(print_log(level, message, params)).expect("Null character in log message :(");
-        unsafe { ffi::janus_vprintf(output.as_ptr()) }
+        unsafe {
+            let output = CString::new(print_log(level, message, params)).expect("Null character in log message :(");
+            ffi::janus_vprintf(output.as_ptr())
+        }
     }
 }
 

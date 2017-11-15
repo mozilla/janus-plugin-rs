@@ -51,7 +51,7 @@ impl JanssonValue {
     }
 
     /// Gets the reference backing this value without taking ownership.
-    pub fn as_mut_ref(&self) -> &mut RawJanssonValue {
+    pub fn as_mut_ref(&mut self) -> &mut RawJanssonValue {
         unsafe { self.ptr.as_mut().unwrap() }
     }
 
@@ -85,13 +85,13 @@ impl JanssonValue {
     }
 
     /// Encodes this Jansson value as a JSON owned string.
-    pub fn to_string(self, encoding_flags: JanssonEncodingFlags) -> String {
+    pub fn to_string(&self, encoding_flags: JanssonEncodingFlags) -> String {
         let cstring = self.to_libcstring(encoding_flags);
         cstring.to_str().expect("Null bytes in Jansson output :(").to_owned()
     }
 
     /// Encodes this Jansson value as a JSON owned C-style string.
-    pub fn to_libcstring(self, encoding_flags: JanssonEncodingFlags) -> LibcString {
+    pub fn to_libcstring(&self, encoding_flags: JanssonEncodingFlags) -> LibcString {
         unsafe {
             let json = jansson_sys::json_dumps(self.ptr, encoding_flags.bits());
             LibcString::from_chars(json).expect("Error writing JSON output from Jansson value :(")

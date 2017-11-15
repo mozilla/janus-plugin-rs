@@ -7,7 +7,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 /// An error indicating that someone handed us a null plugin session handle.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct NullHandleError;
 
 impl Error for NullHandleError {
@@ -22,7 +22,7 @@ impl fmt::Display for NullHandleError {
     }
 }
 
-/// A wrapper for a Janus session. Contains a pointer to the Janus PluginSession (which is used to identify
+/// A wrapper for a Janus session. Contains a pointer to the Janus `PluginSession` (which is used to identify
 /// this session in the Janus FFI) and any Rust state associated with the session.
 #[derive(Debug, Clone)]
 pub struct SessionWrapper<T> {
@@ -47,28 +47,24 @@ impl<T> Eq for SessionWrapper<T> {}
 impl<T> SessionWrapper<T> {
     /// Allocates a boxed, reference-counted state wrapper associated with a Janus PluginSession
     /// (whose plugin_handle will then point to the contents of the box).
-    pub fn associate(handle: *mut PluginSession, state: T) -> Result<Box<Arc<Self>>, NullHandleError> {
-        unsafe {
-            match handle.as_mut() {
-                Some(x) => {
-                    let mut result = Box::new(Arc::new(Self { handle, state }));
-                    x.plugin_handle = result.as_mut() as *mut Arc<Self> as *mut _;
-                    Ok(result)
-                }
-                None => Err(NullHandleError),
+    pub unsafe fn associate(handle: *mut PluginSession, state: T) -> Result<Box<Arc<Self>>, NullHandleError> {
+        match handle.as_mut() {
+            Some(x) => {
+                let mut result = Box::new(Arc::new(Self { handle, state }));
+                x.plugin_handle = result.as_mut() as *mut Arc<Self> as *mut _;
+                Ok(result)
             }
+            None => Err(NullHandleError),
         }
     }
 
     /// Retrieves and clones the reference-counted state wrapper associated with a Janus PluginSession.
-    pub fn from_ptr(handle: *mut PluginSession) -> Result<Arc<Self>, NullHandleError> {
-        unsafe {
-            match handle.as_ref() {
-                Some(x) => Ok(Arc::clone(
-                    (x.plugin_handle as *mut Arc<Self>).as_ref().unwrap()
-                )),
-                None => Err(NullHandleError),
-            }
+    pub unsafe fn from_ptr(handle: *mut PluginSession) -> Result<Arc<Self>, NullHandleError> {
+        match handle.as_ref() {
+            Some(x) => Ok(Arc::clone(
+                (x.plugin_handle as *mut Arc<Self>).as_ref().unwrap()
+            )),
+            None => Err(NullHandleError),
         }
     }
 
@@ -82,6 +78,18 @@ impl<T> Deref for SessionWrapper<T> {
     type Target = T;
     fn deref(&self) -> &T {
         &self.state
+    }
+}
+
+#[cfg(feature="refcount")]
+impl<T> Drop for SessionWrapper<T> {
+    fn drop(&mut self) {
+        unsafe {
+            // the Janus core assumes that we will store the handle reference, and increments it on our behalf.
+            // we're only responsible for decrementing it when we are done with it.
+            let refcount = &(*self.handle).ref_;
+            super::refcount::decrease(refcount);
+        }
     }
 }
 
@@ -106,8 +114,8 @@ mod tests {
             __padding: Default::default(),
         };
         let ptr = &mut handle as *mut _;
-        let session = SessionWrapper::associate(ptr, State(42)).unwrap();
+        let session = unsafe { SessionWrapper::associate(ptr, State(42)).unwrap() };
         assert_eq!(session.as_ref() as *const _ as *mut _, handle.plugin_handle);
-        assert_eq!(SessionWrapper::<State>::from_ptr(ptr).unwrap().state.0, 42);
+        assert_eq!(unsafe { SessionWrapper::<State>::from_ptr(ptr).unwrap().state.0 }, 42);
     }
 }

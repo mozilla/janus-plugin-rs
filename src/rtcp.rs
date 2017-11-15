@@ -1,9 +1,9 @@
 /// Utilities to manipulate RTCP packets. For reference, see:
 ///
-/// https://tools.ietf.org/html/rfc3605 (RTCP)
-/// https://tools.ietf.org/html/rfc4585 (definition of PLI, others)
-/// https://tools.ietf.org/html/rfc5104 (definition of FIR, others)
-/// https://tools.ietf.org/html/draft-alvestrand-rmcat-remb-03 (definition of REMB)
+/// <https://tools.ietf.org/html/rfc3605> (RTCP)
+/// <https://tools.ietf.org/html/rfc4585> (definition of PLI, others)
+/// <https://tools.ietf.org/html/rfc5104> (definition of FIR, others)
+/// <https://tools.ietf.org/html/draft-alvestrand-rmcat-remb-03> (definition of REMB)
 
 use super::ffi;
 

@@ -43,6 +43,11 @@ pub struct janus_sdp {
     pub c_addr: *mut c_char,
     pub attributes: *mut GList,
     pub m_lines: *mut GList,
+
+    #[cfg(feature="refcount")]
+    pub destroyed: c_int,
+    #[cfg(feature="refcount")]
+    pub ref_: super::janus_refcount,
 }
 
 #[repr(C)]
@@ -60,6 +65,11 @@ pub struct janus_sdp_mline {
     pub b_value: c_int,
     pub direction: janus_sdp_mdirection,
     pub attributes: *mut GList,
+
+    #[cfg(feature="refcount")]
+    pub destroyed: c_int,
+    #[cfg(feature="refcount")]
+    pub ref_: super::janus_refcount,
 }
 
 #[repr(C)]
@@ -68,6 +78,11 @@ pub struct janus_sdp_attribute {
     pub name: *mut c_char,
     pub value: *mut c_char,
     pub direction: janus_sdp_mdirection,
+
+    #[cfg(feature="refcount")]
+    pub destroyed: c_int,
+    #[cfg(feature="refcount")]
+    pub ref_: super::janus_refcount,
 }
 
 extern "C" {
@@ -90,7 +105,12 @@ extern "C" {
     pub fn janus_sdp_remove_payload_type(sdp: *mut janus_sdp, pt: c_int) -> c_int;
     pub fn janus_sdp_write(sdp: *mut janus_sdp) -> *mut c_char;
     pub fn janus_sdp_new(name: *const c_char, address: *const c_char) -> *mut janus_sdp;
+
+    #[cfg(feature="refcount")]
+    pub fn janus_sdp_destroy(sdp: *mut janus_sdp);
+    #[cfg(not(feature="refcount"))]
     pub fn janus_sdp_free(sdp: *mut janus_sdp);
+
     pub fn janus_sdp_generate_offer(name: *const c_char, address: *const c_char, ...) -> *mut janus_sdp;
     pub fn janus_sdp_generate_answer(offer: *mut janus_sdp, ...) -> *mut janus_sdp;
     pub fn janus_sdp_get_codec_pt(sdp: *mut janus_sdp, codec: *const c_char) -> c_int;

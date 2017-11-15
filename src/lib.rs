@@ -20,6 +20,7 @@ pub use ffi::janus_plugin_session as PluginSession;
 pub use jansson::{JanssonDecodingFlags, JanssonEncodingFlags, JanssonValue, RawJanssonValue};
 pub use session::SessionWrapper;
 use std::error::Error;
+use std::fmt;
 use std::ffi::CStr;
 use std::mem;
 use std::ops::Deref;
@@ -33,14 +34,37 @@ pub mod session;
 pub mod jansson;
 pub mod utils;
 
+#[cfg(feature="refcount")]
+pub mod refcount;
+
+/// An error emitted by the Janus core in response to a plugin.
+#[derive(Debug, Clone, Copy)]
+pub struct JanusError(pub i32);
+
+impl JanusError {
+    /// Returns Janus's description text for this error.
+    pub fn to_cstr(&self) -> &'static CStr {
+        unsafe { CStr::from_ptr(ffi::janus_get_api_error(self.0)) }
+    }
+}
+
+impl Error for JanusError {
+    fn description(&self) -> &'static str {
+        self.to_cstr().to_str().unwrap()
+    }
+}
+
+impl fmt::Display for JanusError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} (code: {})", self.description(), self.0)
+    }
+}
+
 /// Converts a Janus gateway result code to either success or a potential error.
-pub fn get_result(error: i32) -> Result<(), Box<Error>> {
+pub fn get_result(error: i32) -> Result<(), JanusError> {
     match error {
         0 => Ok(()),
-        e => {
-            let msg = unsafe { CStr::from_ptr(ffi::janus_get_api_error(e)).to_str()? };
-            Err(From::from(format!("{} (code: {})", msg, e)))
-        }
+        e => Err(JanusError(e))
     }
 }
 
@@ -61,7 +85,7 @@ impl PluginResult {
     }
 
     /// Transfers ownership of this result to the wrapped raw pointer. The consumer is responsible for calling
-    /// janus_plugin_result_destroy on the pointer when finished.
+    /// `janus_plugin_result_destroy` on the pointer when finished.
     pub fn into_raw(self) -> *mut RawPluginResult {
         let ptr = self.ptr;
         mem::forget(self);
@@ -97,7 +121,7 @@ pub struct PluginMetadata {
 }
 
 /// Helper macro to produce a Janus plugin instance. Should be called with
-/// a PluginMetadata instance and a series of exported plugin event handlers.
+/// a `PluginMetadata` instance and a series of exported plugin event handlers.
 #[macro_export]
 macro_rules! build_plugin {
     ($md:expr, $($cb:ident),*) => {{

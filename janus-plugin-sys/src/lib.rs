@@ -40,7 +40,7 @@ pub struct janus_plugin_session {
     pub gateway_handle: *mut c_void,
     pub plugin_handle: *mut c_void,
     pub stopped: c_int,
-    pub _ref: janus_refcount,
+    pub ref_: janus_refcount,
 }
 
 #[cfg(feature="refcount")]
@@ -116,4 +116,7 @@ extern "C" {
     pub fn janus_plugin_result_destroy(result: *mut janus_plugin_result);
     pub fn janus_get_api_error(error: c_int) -> *const c_char;
     pub fn janus_vprintf(format: *const c_char, ...);
+
+    #[cfg(feature="refcount")]
+    pub static refcount_debug: c_int;
 }

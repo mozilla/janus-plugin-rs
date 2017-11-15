@@ -4,6 +4,7 @@ use super::ffi;
 use super::glib;
 use super::libc;
 pub use ffi::sdp::janus_sdp_generate_answer as generate_answer;
+pub use ffi::sdp::janus_sdp_generate_offer as generate_offer;
 use std::collections::HashMap;
 use std::error::Error;
 use std::ffi::{CStr, CString};
@@ -75,7 +76,7 @@ impl VideoCodec {
 #[repr(i32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// Parameters controlling SDP offer answering behavior. Used as keys in the parameter list
-/// for janus_sdp_generate_answer. See sdp-utils.h in the Janus source for more details.
+/// for `janus_sdp_generate_answer`. See sdp-utils.h in the Janus source for more details.
 pub enum OfferAnswerParameters {
     /// Used to signal the end of the offer-answer parameter list.
     Done = 0,
@@ -117,7 +118,7 @@ impl Sdp {
     }
 
     /// Parses an SDP offer string from a client into a structured SDP object.
-    pub fn parse(offer: CString) -> Result<Self, Box<Error>> {
+    pub fn parse(offer: &CStr) -> Result<Self, Box<Error>> {
         let mut error_buffer = Vec::with_capacity(512);
         let error_ptr = error_buffer.as_mut_ptr() as *mut _;
         unsafe {
@@ -157,20 +158,24 @@ impl Sdp {
                     let mut attr_node = m_line.attributes;
                     while let Some(node) = attr_node.as_ref() {
                         let next = node.next; // we might delete this link, so grab next now!
-                        let attr = (node.data as *const RawAttribute).as_ref().expect("Null data in SDP attribute node :(");
+                        let data = node.data as *mut RawAttribute;
+                        let attr = data.as_ref().expect("Null data in SDP attribute node :(");
                         let name = CStr::from_ptr(attr.name).to_str().expect("Invalid attribute name in SDP :(");
                         if MEDIA_PAYLOAD_ATTRIBUTES.contains(&name) {
                             // each of the attributes with payload types in the values look like "$pt $stuff"
                             // where $stuff is specifying payload-type-specfic options; just rewrite $pt
                             let value = CStr::from_ptr(attr.value).to_str().expect("Invalid attribute value in SDP :(");
                             if value.starts_with(&from_pt_string) {
-                                let new_val = value.replacen(&from_pt_string, &to_pt_string, 1);
-                                let new_attr = ffi::sdp::janus_sdp_attribute_create(
-                                    attr.name,
-                                    CString::new(new_val).unwrap().as_ptr() // copied into the attribute
-                                );
+                                let new_val = if name == "fmtp" {
+                                    CString::new("107 profile-level-id=42e01f;packetization-mode=1").unwrap()
+                                } else {
+                                    CString::new(value.replacen(&from_pt_string, &to_pt_string, 1)).unwrap()
+                                };
+                                // value string is copied into the attribute
+                                let new_attr = ffi::sdp::janus_sdp_attribute_create(attr.name, new_val.as_ptr());
                                 m_line.attributes = glib::g_list_prepend(m_line.attributes, new_attr as *mut _);
                                 m_line.attributes = glib::g_list_delete_link(m_line.attributes, attr_node);
+                                ffi::sdp::janus_sdp_attribute_destroy(data);
                             }
                         }
                         attr_node = next;
@@ -190,7 +195,7 @@ impl Sdp {
                 result.entry(ml.type_).or_insert_with(Vec::new).push(ml);
                 ml_node = node.next;
             }
-            return result;
+            result
 	}
     }
 
@@ -213,6 +218,9 @@ impl Deref for Sdp {
 
 impl Drop for Sdp {
     fn drop(&mut self) {
+        #[cfg(feature="refcount")]
+        unsafe { ffi::sdp::janus_sdp_destroy(self.ptr) }
+        #[cfg(not(feature="refcount"))]
         unsafe { ffi::sdp::janus_sdp_free(self.ptr) }
     }
 }
@@ -221,7 +229,7 @@ unsafe impl Send for Sdp {}
 
 #[macro_export]
 /// Given an SDP offer from a client, generates an SDP answer.
-/// (This has to be a macro because generate_answer is variadic.)
+/// (This has to be a macro because `generate_answer` is variadic.)
 macro_rules! answer_sdp {
     ($sdp:expr $(, $param:expr, $value:expr)* $(,)*) => {{
         unsafe {
@@ -231,6 +239,23 @@ macro_rules! answer_sdp {
                 $crate::sdp::OfferAnswerParameters::Done
             );
             $crate::sdp::Sdp::new(result).expect("Mysterious error generating SDP answer :(")
+        }
+    }}
+}
+
+#[macro_export]
+/// Generates an SDP offer given some parameters.
+/// (This has to be a macro because `generate_offer` is variadic.)
+macro_rules! offer_sdp {
+    ($name:expr, $address:expr $(, $param:expr, $value:expr)* $(,)*) => {{
+        unsafe {
+            let result = $crate::sdp::generate_offer(
+                $name,
+                $address,
+                $($param, $value,)*
+                $crate::sdp::OfferAnswerParameters::Done
+            );
+            $crate::sdp::Sdp::new(result).expect("Mysterious error generating SDP offer :(")
         }
     }}
 }
