@@ -218,9 +218,6 @@ impl Deref for Sdp {
 
 impl Drop for Sdp {
     fn drop(&mut self) {
-        #[cfg(feature="refcount")]
-        unsafe { ffi::sdp::janus_sdp_destroy(self.ptr) }
-        #[cfg(not(feature="refcount"))]
         unsafe { ffi::sdp::janus_sdp_free(self.ptr) }
     }
 }
