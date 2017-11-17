@@ -3,10 +3,13 @@
 use super::ffi;
 use super::glib;
 use super::libc;
+use super::serde::de::{self, Deserialize, Deserializer, Unexpected, Visitor};
+use super::serde::ser::{Serialize, Serializer};
 pub use ffi::sdp::janus_sdp_generate_answer as generate_answer;
 pub use ffi::sdp::janus_sdp_generate_offer as generate_offer;
 use std::collections::HashMap;
 use std::error::Error;
+use std::fmt;
 use std::ffi::{CStr, CString};
 use std::ops::Deref;
 use std::str;
@@ -112,20 +115,38 @@ pub struct Sdp {
     pub ptr: *mut RawSdp, // annoyingly pub because of answer_sdp macro
 }
 
+/// An error indicating that we failed to parse an SDP for some reason.
+#[derive(Debug, Clone)]
+pub struct SdpParseError {
+    buffer: Vec<u8>
+}
+
+impl Error for SdpParseError {
+    fn description(&self) -> &str {
+        str::from_utf8(&self.buffer).unwrap_or("SDP parsing failed, but the error was not valid UTF-8 :(")
+    }
+}
+
+impl fmt::Display for SdpParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(self.description())
+    }
+}
+
 impl Sdp {
     pub unsafe fn new(ptr: *mut RawSdp) -> Option<Self> {
         ptr.as_mut().map(|p| Self { ptr: p })
     }
 
     /// Parses an SDP offer string from a client into a structured SDP object.
-    pub fn parse(offer: &CStr) -> Result<Self, Box<Error>> {
+    pub fn parse(offer: &CStr) -> Result<Self, SdpParseError> {
         let mut error_buffer = Vec::with_capacity(512);
         let error_ptr = error_buffer.as_mut_ptr() as *mut _;
         unsafe {
             let result = ffi::sdp::janus_sdp_parse(offer.as_ptr(), error_ptr, error_buffer.capacity());
             Sdp::new(result).ok_or_else(|| {
                 error_buffer.set_len(libc::strlen(error_ptr));
-                From::from(str::from_utf8(&error_buffer).expect("SDP error not valid UTF-8 :("))
+                SdpParseError { buffer: error_buffer }
             })
         }
     }
@@ -219,6 +240,35 @@ impl Deref for Sdp {
 impl Drop for Sdp {
     fn drop(&mut self) {
         unsafe { ffi::sdp::janus_sdp_free(self.ptr) }
+    }
+}
+
+impl Serialize for Sdp {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+        self.to_string().serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for Sdp {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+        struct SdpVisitor;
+        impl<'de> Visitor<'de> for SdpVisitor {
+            type Value = Sdp;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("an SDP string")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Sdp, E> where E: de::Error {
+                if let Ok(cs_value) = CString::new(value) {
+                    if let Ok(sdp) = Sdp::parse(&cs_value) {
+                        return Ok(sdp)
+                    }
+                }
+                Err(E::invalid_value(Unexpected::Str(value), &self))
+            }
+        }
+        deserializer.deserialize_str(SdpVisitor)
     }
 }
 

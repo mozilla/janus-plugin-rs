@@ -8,6 +8,7 @@ extern crate jansson_sys;
 extern crate janus_plugin_sys as ffi;
 extern crate glib_sys as glib;
 extern crate libc;
+extern crate serde;
 
 pub use debug::LogLevel;
 pub use debug::log;

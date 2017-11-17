@@ -2,6 +2,8 @@
 
 use super::glib;
 use super::libc;
+use super::serde::ser::{self, Serialize, Serializer};
+use std::error::Error;
 use std::ffi::CStr;
 use std::ops::Deref;
 use std::os::raw::c_char;
@@ -33,6 +35,15 @@ impl Drop for GLibString {
     }
 }
 
+impl Serialize for GLibString {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+        match self.to_str() {
+            Ok(s) => serializer.serialize_str(s),
+            Err(e) => Err(ser::Error::custom(e.description()))
+        }
+    }
+}
+
 unsafe impl Send for GLibString {}
 unsafe impl Sync for GLibString {}
 
@@ -60,6 +71,15 @@ impl Deref for LibcString {
 impl Drop for LibcString {
     fn drop(&mut self) {
         unsafe { libc::free(self.ptr as *mut _) }
+    }
+}
+
+impl Serialize for LibcString {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+        match self.to_str() {
+            Ok(s) => serializer.serialize_str(s),
+            Err(e) => Err(ser::Error::custom(e.description()))
+        }
     }
 }
 
