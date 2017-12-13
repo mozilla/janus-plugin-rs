@@ -11,7 +11,7 @@ Library for creating Rust plugins to [Janus](https://janus.conf.meetecho.com/). 
 janus-plugin = "0.6.0"
 ```
 
-If you want to build a version compatible with the Janus refcount branch instead of stable master:
+If you want to build a version compatible with the Janus [refcount](https://github.com/meetecho/janus-gateway/tree/refcount) branch instead of stable master:
 
 ``` toml
 [dependencies]
