@@ -2,11 +2,13 @@
 extern crate chrono;
 extern crate colored;
 
+pub use super::ffi::janus_log_level as JANUS_LOG_LEVEL;
 use self::chrono::{DateTime, Local};
 use self::colored::{Color, Colorize};
 use super::ffi;
 use std::ffi::CString;
 use std::fmt::Write;
+use std::fmt;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 /// A Janus log level. Lower is more severe.
@@ -34,7 +36,6 @@ impl LogLevel {
 
 #[derive(Debug, Clone)]
 pub struct LogParameters {
-    pub max_log_level: i32,
     pub log_timestamps: bool,
     pub log_colors: bool,
     pub clock: fn() -> DateTime<Local>,
@@ -44,7 +45,6 @@ impl Default for LogParameters {
     fn default() -> Self {
         unsafe {
             Self {
-                max_log_level: ffi::janus_log_level,
                 log_timestamps: ffi::janus_log_timestamps == 1,
                 log_colors: ffi::janus_log_colors == 1,
                 clock: Local::now,
@@ -55,19 +55,17 @@ impl Default for LogParameters {
 
 /// Writes a message at the given log level to the Janus log, using the provided parameters to control
 /// how the log message is formatted.
-pub fn write_log(level: LogLevel, message: &str, params: LogParameters) {
-    if level as i32 <= params.max_log_level {
-        unsafe {
-            let output = CString::new(print_log(level, message, params)).expect("Null character in log message :(");
-            ffi::janus_vprintf(output.as_ptr())
-        }
+pub fn log(level: LogLevel, message: fmt::Arguments, params: LogParameters) {
+    unsafe {
+        let output = CString::new(print_log(level, message, params));
+        ffi::janus_vprintf(output.expect("Null character in log message :(").as_ptr())
     }
 }
 
 /// Prints a message at the given log level into an owned string, using the provided parameters to control
 /// how the log message is formatted.
-pub fn print_log(level: LogLevel, message: &str, params: LogParameters) -> String {
-    let mut output = String::with_capacity(message.len() + 40);
+pub fn print_log(level: LogLevel, message: fmt::Arguments, params: LogParameters) -> String {
+    let mut output = String::with_capacity(150); // reasonably conservative size for typical messages
     if params.log_timestamps {
         write!(output, "{} ", (params.clock)().format("[%a %b %e %T %Y]")).unwrap();
     }
@@ -79,13 +77,59 @@ pub fn print_log(level: LogLevel, message: &str, params: LogParameters) -> Strin
         };
         write!(output, "{}", prefix).unwrap();
     }
-    write!(output, "{}\n", message).unwrap();
+    output.write_fmt(message).expect("Error constructing log message!");
+    output.push('\n');
     output
 }
 
-/// Writes a message at the given log level to the Janus log.
-pub fn log(level: LogLevel, message: &str) {
-    write_log(level, message, LogParameters::default());
+#[macro_export]
+macro_rules! janus_log_enabled {
+    ($lvl:expr) => (($lvl as i32) < unsafe { $crate::debug::JANUS_LOG_LEVEL })
+}
+
+#[macro_export]
+macro_rules! janus_log {
+    ($lvl:expr, $($arg:tt)+) => ({
+        let lvl = $lvl;
+        if janus_log_enabled!(lvl) {
+            $crate::debug::log(lvl, format_args!($($arg)+), $crate::debug::LogParameters::default())
+        }
+    })
+}
+
+#[macro_export]
+macro_rules! janus_fatal {
+    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Fatal, $($arg)+))
+}
+
+#[macro_export]
+macro_rules! janus_err {
+    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Err, $($arg)+))
+}
+
+#[macro_export]
+macro_rules! janus_warn {
+    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Warn, $($arg)+))
+}
+
+#[macro_export]
+macro_rules! janus_info {
+    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Info, $($arg)+))
+}
+
+#[macro_export]
+macro_rules! janus_verb {
+    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Verb, $($arg)+))
+}
+
+#[macro_export]
+macro_rules! janus_huge {
+    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Huge, $($arg)+))
+}
+
+#[macro_export]
+macro_rules! janus_dbg {
+    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Dbg, $($arg)+))
 }
 
 #[cfg(test)]
@@ -104,7 +148,7 @@ mod tests {
             "[Tue Oct 10 01:37:46 2017] [WARN] Test message.\n",
             print_log(
                 LogLevel::Warn,
-                "Test message.",
+                format_args!("{}", "Test message."),
                 LogParameters {
                     log_timestamps: true,
                     ..default_log_parameters()
@@ -119,7 +163,7 @@ mod tests {
             "\u{1b}[35m[FATAL] \u{1b}[0mCrash!\n",
             print_log(
                 LogLevel::Fatal,
-                "Crash!",
+                format_args!("{}", "Crash!"),
                 LogParameters {
                     log_colors: true,
                     ..default_log_parameters()
@@ -131,7 +175,7 @@ mod tests {
             "\u{1b}[31m[ERR] \u{1b}[0mAn error occurred!\n",
             print_log(
                 LogLevel::Err,
-                "An error occurred!",
+                format_args!("{}", "An error occurred!"),
                 LogParameters {
                     log_colors: true,
                     ..default_log_parameters()
@@ -143,7 +187,7 @@ mod tests {
             "\u{1b}[33m[WARN] \u{1b}[0mAttention!\n",
             print_log(
                 LogLevel::Warn,
-                "Attention!",
+                format_args!("{}", "Attention!"),
                 LogParameters {
                     log_colors: true,
                     ..default_log_parameters()
@@ -155,7 +199,7 @@ mod tests {
             "Just a message.\n",
             print_log(
                 LogLevel::Info,
-                "Just a message.",
+                format_args!("{}", "Just a message."),
                 LogParameters {
                     log_colors: true,
                     ..default_log_parameters()
@@ -166,7 +210,6 @@ mod tests {
 
     fn default_log_parameters() -> LogParameters {
         LogParameters {
-            max_log_level: 6,
             log_timestamps: false,
             log_colors: false,
             clock: || fixed_clock(2017, 10, 10, 1, 37, 46),
