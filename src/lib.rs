@@ -2,8 +2,6 @@
 
 #[macro_use]
 extern crate bitflags;
-#[macro_use]
-extern crate cstr_macro;
 extern crate jansson_sys;
 extern crate janus_plugin_sys as ffi;
 extern crate glib_sys as glib;
@@ -16,10 +14,10 @@ pub use ffi::JANUS_PLUGIN_API_VERSION as API_VERSION;
 pub use ffi::janus_callbacks as PluginCallbacks;
 pub use ffi::janus_plugin as Plugin;
 pub use ffi::janus_plugin_result as RawPluginResult;
-pub use ffi::janus_plugin_result_type as PluginResultType;
 pub use ffi::janus_plugin_session as PluginSession;
 pub use jansson::{JanssonDecodingFlags, JanssonEncodingFlags, JanssonValue, RawJanssonValue};
 pub use session::SessionWrapper;
+use ffi::janus_plugin_result_type as PluginResultType;
 use std::error::Error;
 use std::fmt;
 use std::ffi::CStr;
@@ -77,12 +75,27 @@ pub struct PluginResult {
 
 impl PluginResult {
     /// Creates a new plugin result.
-    pub fn new(type_: PluginResultType, text: *const c_char, content: Option<JanssonValue>) -> Self {
-        let content_ptr = match content {
-            Some(x) => x.into_raw(),
-            None => ptr::null_mut(),
-        };
-        Self { ptr: unsafe { ffi::janus_plugin_result_new(type_, text, content_ptr) } }
+    pub unsafe fn new(type_: PluginResultType, text: *const c_char, content: *mut RawJanssonValue) -> Self {
+        Self { ptr: ffi::janus_plugin_result_new(type_, text, content) }
+    }
+
+    /// Creates a plugin result indicating a synchronously successful request. The provided response
+    /// JSON will be passed back to the client.
+    pub fn ok(response: JanssonValue) -> Self {
+        unsafe { Self::new(PluginResultType::JANUS_PLUGIN_OK, ptr::null(), response.into_raw()) }
+    }
+
+    /// Creates a plugin result indicating an asynchronous request in progress. If provided, the hint text
+    /// will be synchronously passed back to the client in the acknowledgement.
+    pub fn ok_wait(hint: Option<&'static CStr>) -> Self {
+        let hint_ptr = hint.map(|x| x.as_ptr()).unwrap_or_else(ptr::null);
+        unsafe { Self::new(PluginResultType::JANUS_PLUGIN_OK_WAIT, hint_ptr, ptr::null_mut()) }
+    }
+
+    /// Creates a plugin result indicating an error. The provided error text will be synchronously passed
+    /// back to the client.
+    pub fn error(msg: &'static CStr) -> Self {
+        unsafe { Self::new(PluginResultType::JANUS_PLUGIN_ERROR, msg.as_ptr(), ptr::null_mut()) }
     }
 
     /// Transfers ownership of this result to the wrapped raw pointer. The consumer is responsible for calling
@@ -112,13 +125,13 @@ unsafe impl Send for PluginResult {}
 
 #[derive(Debug)]
 /// Represents metadata about this plugin which Janus can query at runtime.
-pub struct PluginMetadata {
+pub struct PluginMetadata<'pl> {
     pub version: c_int,
-    pub version_str: *const c_char,
-    pub description: *const c_char,
-    pub name: *const c_char,
-    pub author: *const c_char,
-    pub package: *const c_char,
+    pub version_str: &'pl CStr,
+    pub description: &'pl CStr,
+    pub name: &'pl CStr,
+    pub author: &'pl CStr,
+    pub package: &'pl CStr,
 }
 
 /// Helper macro to produce a Janus plugin instance. Should be called with
@@ -128,11 +141,11 @@ macro_rules! build_plugin {
     ($md:expr, $($cb:ident),*) => {{
         extern "C" fn get_api_compatibility() -> c_int { $crate::API_VERSION }
         extern "C" fn get_version() -> c_int { $md.version }
-        extern "C" fn get_version_string() -> *const c_char { $md.version_str }
-        extern "C" fn get_description() -> *const c_char { $md.description }
-        extern "C" fn get_name() -> *const c_char { $md.name }
-        extern "C" fn get_author() -> *const c_char { $md.author }
-        extern "C" fn get_package() -> *const c_char { $md.package }
+        extern "C" fn get_version_string() -> *const c_char { $md.version_str.as_ptr() }
+        extern "C" fn get_description() -> *const c_char { $md.description.as_ptr() }
+        extern "C" fn get_name() -> *const c_char { $md.name.as_ptr() }
+        extern "C" fn get_author() -> *const c_char { $md.author.as_ptr() }
+        extern "C" fn get_package() -> *const c_char { $md.package.as_ptr() }
         $crate::Plugin {
             get_api_compatibility,
             get_version,

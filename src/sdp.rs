@@ -21,6 +21,16 @@ pub type RawAttribute = ffi::sdp::janus_sdp_attribute;
 pub use ffi::sdp::janus_sdp_mtype as MediaType;
 pub use ffi::sdp::janus_sdp_mdirection as MediaDirection;
 
+// courtesy of c_string crate, which also has some other stuff we aren't interested in
+// taking in as a dependency here.
+macro_rules! c_str {
+    ($lit:expr) => {
+        unsafe {
+            CStr::from_ptr(concat!($lit, "\0").as_ptr() as *const $crate::c_char)
+        }
+    }
+}
+
 /// SDP attributes which may refer to a specific RTP payload type.
 static MEDIA_PAYLOAD_ATTRIBUTES: [&'static str; 3] = ["rtpmap", "fmtp", "rtcp-fb"];
 
@@ -40,15 +50,13 @@ impl AudioCodec {
         self.to_cstr().to_str().unwrap()
     }
     pub fn to_cstr(&self) -> &'static CStr {
-        unsafe {
-            CStr::from_ptr(match *self {
-                AudioCodec::Opus => cstr!("opus"),
-                AudioCodec::Pcmu => cstr!("pcmu"),
-                AudioCodec::Pcma => cstr!("pcma"),
-                AudioCodec::G722 => cstr!("g722"),
-                AudioCodec::Isac16 => cstr!("isac16"),
-                AudioCodec::Isac32 => cstr!("isac32"),
-            })
+        match *self {
+            AudioCodec::Opus => c_str!("opus"),
+            AudioCodec::Pcmu => c_str!("pcmu"),
+            AudioCodec::Pcma => c_str!("pcma"),
+            AudioCodec::G722 => c_str!("g722"),
+            AudioCodec::Isac16 => c_str!("isac16"),
+            AudioCodec::Isac32 => c_str!("isac32"),
         }
     }
 }
@@ -66,12 +74,10 @@ impl VideoCodec {
         self.to_cstr().to_str().unwrap()
     }
     pub fn to_cstr(&self) -> &'static CStr {
-        unsafe {
-            CStr::from_ptr(match *self {
-                VideoCodec::Vp8 => cstr!("vp8"),
-                VideoCodec::Vp9 => cstr!("vp9"),
-                VideoCodec::H264 => cstr!("h264"),
-            })
+        match *self {
+            VideoCodec::Vp8 => c_str!("vp8"),
+            VideoCodec::Vp9 => c_str!("vp9"),
+            VideoCodec::H264 => c_str!("h264"),
         }
     }
 }
