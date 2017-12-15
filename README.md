@@ -18,6 +18,13 @@ If you want to build a version compatible with the Janus [refcount](https://gith
 janus-plugin = { version = "0.7.0", features = ["refcount"] }
 ```
 
+Table of Contents (ToC)
+=======================
+
+* [Building](#building)
+* [Testing](#testing)
+* [Examples](#examples)
+
 ---
 
 ## Building
