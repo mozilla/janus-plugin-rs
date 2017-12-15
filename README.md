@@ -51,3 +51,7 @@ Below you can find some examples of projects using some of these bindings:
 
 * https://github.com/mozilla/janus-plugin-sfu
 * https://github.com/ivanovaleksey/janus-echotest-rs
+
+---
+
+<img src="https://avatars2.githubusercontent.com/u/131524?s=200&v=4" width="50"></img> <img src="http://cdn.ttgtmedia.com/ITKE/cwblogs/open-source-insider/Mozilla%20PL.png" width="50"></img>
