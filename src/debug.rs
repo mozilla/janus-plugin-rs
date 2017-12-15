@@ -84,7 +84,7 @@ pub fn print_log(level: LogLevel, message: fmt::Arguments, params: LogParameters
 
 #[macro_export]
 macro_rules! janus_log_enabled {
-    ($lvl:expr) => (($lvl as i32) < unsafe { $crate::debug::JANUS_LOG_LEVEL })
+    ($lvl:expr) => (($lvl as i32) <= unsafe { $crate::debug::JANUS_LOG_LEVEL })
 }
 
 #[macro_export]
