@@ -26,7 +26,7 @@ pub use ffi::sdp::janus_sdp_mdirection as MediaDirection;
 macro_rules! c_str {
     ($lit:expr) => {
         unsafe {
-            CStr::from_ptr(concat!($lit, "\0").as_ptr() as *const $crate::c_char)
+            ::std::ffi::CStr::from_ptr(concat!($lit, "\0").as_ptr() as *const ::std::os::raw::c_char)
         }
     }
 }
