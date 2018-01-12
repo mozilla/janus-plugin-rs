@@ -9,12 +9,6 @@ use std::os::raw::{c_char, c_int, c_void};
 pub mod rtcp;
 pub mod sdp;
 
-#[cfg(not(feature="refcount"))]
-pub const JANUS_PLUGIN_API_VERSION: c_int = 8;
-
-#[cfg(feature="refcount")]
-pub const JANUS_PLUGIN_API_VERSION: c_int = 9;
-
 #[repr(i32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum janus_plugin_result_type {

@@ -10,7 +10,6 @@ extern crate serde;
 
 pub use debug::LogLevel;
 pub use debug::log;
-pub use ffi::JANUS_PLUGIN_API_VERSION as API_VERSION;
 pub use ffi::janus_callbacks as PluginCallbacks;
 pub use ffi::janus_plugin as Plugin;
 pub use ffi::janus_plugin_result as RawPluginResult;
@@ -126,6 +125,7 @@ unsafe impl Send for PluginResult {}
 #[derive(Debug)]
 /// Represents metadata about this plugin which Janus can query at runtime.
 pub struct PluginMetadata<'pl> {
+    pub api_version: c_int,
     pub version: c_int,
     pub version_str: &'pl CStr,
     pub description: &'pl CStr,
@@ -139,7 +139,7 @@ pub struct PluginMetadata<'pl> {
 #[macro_export]
 macro_rules! build_plugin {
     ($md:expr, $($cb:ident),*) => {{
-        extern "C" fn get_api_compatibility() -> c_int { $crate::API_VERSION }
+        extern "C" fn get_api_compatibility() -> c_int { $md.api_version }
         extern "C" fn get_version() -> c_int { $md.version }
         extern "C" fn get_version_string() -> *const c_char { $md.version_str.as_ptr() }
         extern "C" fn get_description() -> *const c_char { $md.description.as_ptr() }
