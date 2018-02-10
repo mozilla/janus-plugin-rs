@@ -193,12 +193,8 @@ impl Sdp {
                             // where $stuff is specifying payload-type-specfic options; just rewrite $pt
                             let value = CStr::from_ptr(attr.value).to_str().expect("Invalid attribute value in SDP :(");
                             if value.starts_with(&from_pt_string) {
-                                let new_val = if name == "fmtp" {
-                                    CString::new("107 profile-level-id=42e01f;packetization-mode=1").unwrap()
-                                } else {
-                                    CString::new(value.replacen(&from_pt_string, &to_pt_string, 1)).unwrap()
-                                };
                                 // value string is copied into the attribute
+                                let new_val = CString::new(value.replacen(&from_pt_string, &to_pt_string, 1)).unwrap();
                                 let new_attr = ffi::sdp::janus_sdp_attribute_create(attr.name, new_val.as_ptr());
                                 m_line.attributes = glib::g_list_prepend(m_line.attributes, new_attr as *mut _);
                                 m_line.attributes = glib::g_list_delete_link(m_line.attributes, attr_node);
