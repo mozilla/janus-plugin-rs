@@ -10,13 +10,14 @@ extern crate serde;
 
 pub use debug::LogLevel;
 pub use debug::log;
-pub use ffi::janus_callbacks as PluginCallbacks;
-pub use ffi::janus_plugin as Plugin;
-pub use ffi::janus_plugin_result as RawPluginResult;
-pub use ffi::janus_plugin_session as PluginSession;
 pub use jansson::{JanssonDecodingFlags, JanssonEncodingFlags, JanssonValue, RawJanssonValue};
 pub use session::SessionWrapper;
-use ffi::janus_plugin_result_type as PluginResultType;
+pub use ffi::events::janus_eventhandler as EventHandler;
+pub use ffi::plugin::janus_callbacks as PluginCallbacks;
+pub use ffi::plugin::janus_plugin as Plugin;
+pub use ffi::plugin::janus_plugin_result as RawPluginResult;
+pub use ffi::plugin::janus_plugin_session as PluginSession;
+use ffi::plugin::janus_plugin_result_type as PluginResultType;
 use std::error::Error;
 use std::fmt;
 use std::ffi::CStr;
@@ -34,6 +35,20 @@ pub mod utils;
 
 #[cfg(feature="refcount")]
 pub mod refcount;
+
+bitflags! {
+    /// Flags that control which events an event handler receives.
+    pub struct JanusEventType: u32 {
+        const JANUS_EVENT_TYPE_SESSION = 0x0001;
+        const JANUS_EVENT_TYPE_HANDLE = 0x0002;
+        const JANUS_EVENT_TYPE_JSEP = 0x0004;
+        const JANUS_EVENT_TYPE_WEBRTC = 0x0008;
+        const JANUS_EVENT_TYPE_MEDIA = 0x0010;
+        const JANUS_EVENT_TYPE_PLUGIN = 0x0011;
+        const JANUS_EVENT_TYPE_TRANSPORT = 0x0012;
+        const JANUS_EVENT_TYPE_CORE = 0x0014;
+    }
+}
 
 /// An error emitted by the Janus core in response to a plugin.
 #[derive(Debug, Clone, Copy)]
@@ -75,7 +90,7 @@ pub struct PluginResult {
 impl PluginResult {
     /// Creates a new plugin result.
     pub unsafe fn new(type_: PluginResultType, text: *const c_char, content: *mut RawJanssonValue) -> Self {
-        Self { ptr: ffi::janus_plugin_result_new(type_, text, content) }
+        Self { ptr: ffi::plugin::janus_plugin_result_new(type_, text, content) }
     }
 
     /// Creates a plugin result indicating a synchronously successful request. The provided response
@@ -116,26 +131,26 @@ impl Deref for PluginResult {
 
 impl Drop for PluginResult {
     fn drop(&mut self) {
-        unsafe { ffi::janus_plugin_result_destroy(self.ptr) }
+        unsafe { ffi::plugin::janus_plugin_result_destroy(self.ptr) }
     }
 }
 
 unsafe impl Send for PluginResult {}
 
 #[derive(Debug)]
-/// Represents metadata about this plugin which Janus can query at runtime.
-pub struct PluginMetadata<'pl> {
+/// Represents metadata about this library which Janus can query at runtime.
+pub struct LibraryMetadata<'a> {
     pub api_version: c_int,
     pub version: c_int,
-    pub version_str: &'pl CStr,
-    pub description: &'pl CStr,
-    pub name: &'pl CStr,
-    pub author: &'pl CStr,
-    pub package: &'pl CStr,
+    pub version_str: &'a CStr,
+    pub description: &'a CStr,
+    pub name: &'a CStr,
+    pub author: &'a CStr,
+    pub package: &'a CStr,
 }
 
 /// Helper macro to produce a Janus plugin instance. Should be called with
-/// a `PluginMetadata` instance and a series of exported plugin event handlers.
+/// a `LibraryMetadata` instance and a series of exported plugin callbacks.
 #[macro_export]
 macro_rules! build_plugin {
     ($md:expr, $($cb:ident),*) => {{
@@ -166,5 +181,41 @@ macro_rules! export_plugin {
         /// Called by Janus to create an instance of this plugin, using the provided callbacks to dispatch events.
         #[no_mangle]
         pub extern "C" fn create() -> *const $crate::Plugin { $pl }
+    }
+}
+
+/// Helper macro to produce a Janus event handler instance. Should be called with
+/// a `LibraryMetadata` instance and a series of exported event handler callbacks.
+#[macro_export]
+macro_rules! build_eventhandler {
+    ($md:expr, $mask:expr, $($cb:ident),*) => {{
+        extern "C" fn get_api_compatibility() -> c_int { $md.api_version }
+        extern "C" fn get_version() -> c_int { $md.version }
+        extern "C" fn get_version_string() -> *const c_char { $md.version_str.as_ptr() }
+        extern "C" fn get_description() -> *const c_char { $md.description.as_ptr() }
+        extern "C" fn get_name() -> *const c_char { $md.name.as_ptr() }
+        extern "C" fn get_author() -> *const c_char { $md.author.as_ptr() }
+        extern "C" fn get_package() -> *const c_char { $md.package.as_ptr() }
+        $crate::EventHandler {
+            events_mask: $mask,
+            get_api_compatibility,
+            get_version,
+            get_version_string,
+            get_description,
+            get_name,
+            get_author,
+            get_package,
+            $($cb,)*
+        }
+    }}
+}
+
+/// Macro to export a Janus event handler instance from this module.
+#[macro_export]
+macro_rules! export_eventhandler {
+    ($evh:expr) => {
+        /// Called by Janus to create an instance of this event handler, using the provided callbacks to dispatch events.
+        #[no_mangle]
+        pub extern "C" fn create() -> *const $crate::EventHandler { $evh }
     }
 }

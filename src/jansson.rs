@@ -45,14 +45,16 @@ pub struct JanssonValue {
 }
 
 impl JanssonValue {
-    /// Creates a wrapper for the given Jansson value.
-    pub unsafe fn new(ptr: *mut RawJanssonValue) -> Option<Self> {
-        ptr.as_mut().map(|p| Self { ptr: p })
+    /// Creates a `JanssonValue` owning the given raw pointer, incrementing the reference count.
+    pub unsafe fn from_and_incref(ptr: *mut RawJanssonValue) -> Option<Self> {
+        jansson_sys::json_incref(ptr);
+        Self::from_raw(ptr)
     }
 
-    /// Gets the reference backing this value without taking ownership.
-    pub fn as_mut_ref(&mut self) -> &mut RawJanssonValue {
-        unsafe { self.ptr.as_mut().unwrap() }
+    /// Creates a `JanssonValue` owning the given raw pointer. Does not increment the reference count, but the
+    /// `JanssonValue`'s destructor will decrement the reference count.
+    pub unsafe fn from_raw(ptr: *mut RawJanssonValue) -> Option<Self> {
+        ptr.as_mut().map(|p| Self { ptr: p })
     }
 
     /// Transfers ownership of this value to this pointer. The consumer of the pointer is responsible for calling
@@ -60,6 +62,11 @@ impl JanssonValue {
     pub fn into_raw(self) -> *mut RawJanssonValue {
         unsafe { jansson_sys::json_incref(self.ptr) };
         self.ptr
+    }
+
+    /// Gets the reference backing this value without taking ownership.
+    pub fn as_mut_ref(&mut self) -> &mut RawJanssonValue {
+        unsafe { self.ptr.as_mut().unwrap() }
     }
 
     /// Decodes a JSON string slice into a Jansson value, returning an error if decoding fails.
@@ -72,7 +79,7 @@ impl JanssonValue {
         unsafe {
             let mut error: jansson_sys::json_error_t = mem::uninitialized();
             let result = jansson_sys::json_loads(input.as_ptr(), decoding_flags.bits(), &mut error as *mut _);
-            match Self::new(result) {
+            match Self::from_raw(result) {
                 Some(val) => Ok(val),
                 None => {
                     let ptr = &error.text as *const _;
