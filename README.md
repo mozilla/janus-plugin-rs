@@ -8,14 +8,14 @@ Library for creating Rust plugins and event handlers for [Janus](https://janus.c
 
 ``` toml
 [dependencies]
-janus-plugin = "0.8.0"
+janus-plugin = "0.9.1"
 ```
 
 If you want to build a version compatible with the Janus [refcount](https://github.com/meetecho/janus-gateway/tree/refcount) branch instead of stable master:
 
 ``` toml
 [dependencies]
-janus-plugin = { version = "0.8.0", features = ["refcount"] }
+janus-plugin = { version = "0.9.1", features = ["refcount"] }
 ```
 
 
