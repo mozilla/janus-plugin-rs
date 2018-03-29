@@ -39,14 +39,14 @@ pub mod refcount;
 bitflags! {
     /// Flags that control which events an event handler receives.
     pub struct JanusEventType: u32 {
-        const JANUS_EVENT_TYPE_SESSION = 0x0001;
-        const JANUS_EVENT_TYPE_HANDLE = 0x0002;
-        const JANUS_EVENT_TYPE_JSEP = 0x0004;
-        const JANUS_EVENT_TYPE_WEBRTC = 0x0008;
-        const JANUS_EVENT_TYPE_MEDIA = 0x0010;
-        const JANUS_EVENT_TYPE_PLUGIN = 0x0011;
-        const JANUS_EVENT_TYPE_TRANSPORT = 0x0012;
-        const JANUS_EVENT_TYPE_CORE = 0x0014;
+        const JANUS_EVENT_TYPE_SESSION   = 1 << 0;
+        const JANUS_EVENT_TYPE_HANDLE    = 1 << 1;
+        const JANUS_EVENT_TYPE_JSEP      = 1 << 3; // yes, really
+        const JANUS_EVENT_TYPE_WEBRTC    = 1 << 4;
+        const JANUS_EVENT_TYPE_MEDIA     = 1 << 5;
+        const JANUS_EVENT_TYPE_PLUGIN    = 1 << 6;
+        const JANUS_EVENT_TYPE_TRANSPORT = 1 << 7;
+        const JANUS_EVENT_TYPE_CORE      = 1 << 8;
     }
 }
 
