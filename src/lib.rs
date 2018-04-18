@@ -50,14 +50,28 @@ bitflags! {
     }
 }
 
-/// An error emitted by the Janus core in response to a plugin.
+/// An error emitted by the Janus core in response to a plugin pushing an event.
 #[derive(Debug, Clone, Copy)]
-pub struct JanusError(pub i32);
+pub struct JanusError(i32);
+
+/// A result from pushing an event to Janus core.
+type JanusResult = Result<(), JanusError>;
 
 impl JanusError {
+    /// The numeric Janus error code for this error. (See apierror.h.)
+    pub fn code(&self) -> i32 {
+        self.0
+    }
     /// Returns Janus's description text for this error.
     pub fn to_cstr(&self) -> &'static CStr {
-        unsafe { CStr::from_ptr(ffi::janus_get_api_error(self.0)) }
+        unsafe { CStr::from_ptr(ffi::janus_get_api_error(self.code())) }
+    }
+    /// Converts a Janus result code to either success or a potential error.
+    pub fn from(val: i32) -> JanusResult {
+        match val {
+            0 => Ok(()),
+            e => Err(JanusError(e))
+        }
     }
 }
 
@@ -69,15 +83,7 @@ impl Error for JanusError {
 
 impl fmt::Display for JanusError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} (code: {})", self.description(), self.0)
-    }
-}
-
-/// Converts a Janus gateway result code to either success or a potential error.
-pub fn get_result(error: i32) -> Result<(), JanusError> {
-    match error {
-        0 => Ok(()),
-        e => Err(JanusError(e))
+        write!(f, "{} (code: {})", self.description(), self.code())
     }
 }
 
