@@ -115,7 +115,6 @@ pub enum OfferAnswerParameters {
     VideoH264Fmtp = 12,
 }
 
-#[derive(Debug)]
 /// An SDP session description.
 pub struct Sdp {
     pub ptr: *mut RawSdp, // annoyingly pub because of answer_sdp macro
@@ -222,8 +221,8 @@ impl Sdp {
 	}
     }
 
-    /// Writes this SDP into a string.
-    pub fn to_string(&self) -> GLibString {
+    /// Writes this SDP into an owned C-style string.
+    pub fn to_glibstring(&self) -> GLibString {
         unsafe {
             let sdp = ffi::sdp::janus_sdp_write(self.ptr);
             GLibString::from_chars(sdp).expect("Mysterious error writing SDP to string :(")
@@ -250,9 +249,15 @@ impl Drop for Sdp {
     }
 }
 
+impl fmt::Debug for Sdp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Sdp {{ {} }}", self.to_glibstring().to_string_lossy())
+    }
+}
+
 impl Serialize for Sdp {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-        self.to_string().serialize(serializer)
+        self.to_glibstring().serialize(serializer)
     }
 }
 

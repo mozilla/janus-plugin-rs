@@ -3,6 +3,7 @@ extern crate libc;
 
 use jansson_sys;
 use std::error::Error;
+use std::fmt;
 use std::ffi::{CStr, CString};
 use std::mem;
 use std::ops::Deref;
@@ -39,7 +40,6 @@ bitflags! {
 
 /// A safe wrapper for a Jansson JSON value. Automatically increases and decreases the refcount
 /// of the underlying value when cloned/dropped.
-#[derive(Debug)]
 pub struct JanssonValue {
     ptr: *mut RawJanssonValue,
 }
@@ -91,18 +91,18 @@ impl JanssonValue {
         }
     }
 
-    /// Encodes this Jansson value as a JSON owned string.
-    pub fn to_string(&self, encoding_flags: JanssonEncodingFlags) -> String {
-        let cstring = self.to_libcstring(encoding_flags);
-        cstring.to_str().expect("Null bytes in Jansson output :(").to_owned()
-    }
-
     /// Encodes this Jansson value as a JSON owned C-style string.
     pub fn to_libcstring(&self, encoding_flags: JanssonEncodingFlags) -> LibcString {
         unsafe {
             let json = jansson_sys::json_dumps(self.ptr, encoding_flags.bits());
             LibcString::from_chars(json).expect("Error writing JSON output from Jansson value :(")
         }
+    }
+}
+
+impl fmt::Debug for JanssonValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "JanssonValue {{ {} }}", self.to_libcstring(JanssonEncodingFlags::empty()).to_string_lossy())
     }
 }
 
@@ -138,7 +138,7 @@ mod tests {
     fn round_trip() {
         let json = r#"{"a": "alpha", "b": true, "c": false, "d": 42, "e": 1.25, "f": null, "g": [1, 2, 3]}"#;
         let result = JanssonValue::from_str(json, JanssonDecodingFlags::empty()).unwrap();
-        assert_eq!(json, result.to_string(JanssonEncodingFlags::empty()));
+        assert_eq!(json, result.to_libcstring(JanssonEncodingFlags::empty()).to_str().unwrap());
     }
 
     #[test]

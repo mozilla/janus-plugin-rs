@@ -8,14 +8,14 @@ use std::ffi::CStr;
 use std::ops::Deref;
 use std::os::raw::c_char;
 
-/// A C-style string which was allocated using glibc.
+/// A C-style string which was allocated using glibc. Derefs to a `CStr`.
 #[derive(Debug)]
 pub struct GLibString {
     ptr: *const CStr,
 }
 
 impl GLibString {
-    /// Creates a GLibString from a glibc-allocated pointer to a C-style string.
+    /// Creates a `GLibString` from a glibc-allocated pointer to a C-style string.
     pub unsafe fn from_chars(chars: *const c_char) -> Option<Self> {
         chars.as_ref().map(|c| Self { ptr: CStr::from_ptr(c) })
     }
@@ -47,14 +47,14 @@ impl Serialize for GLibString {
 unsafe impl Send for GLibString {}
 unsafe impl Sync for GLibString {}
 
-/// A C-style string which was allocated using libc.
+/// A C-style string which was allocated using libc. Derefs to a `CStr`.
 #[derive(Debug)]
 pub struct LibcString {
     ptr: *const CStr,
 }
 
 impl LibcString {
-    /// Creates a LibcString from a libc-allocated pointer to a C-style string.
+    /// Creates a `LibcString` from a libc-allocated pointer to a C-style string.
     pub unsafe fn from_chars(chars: *const c_char) -> Option<Self> {
         chars.as_ref().map(|c| Self { ptr: CStr::from_ptr(c) })
     }
