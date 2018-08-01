@@ -166,6 +166,20 @@ impl Sdp {
         }
     }
 
+    /// Adds an attribute for the m-line with the given payload type.
+    pub fn add_attribute(&mut self, pt: i32, name: &CStr, contents: &CStr) {
+        for (_media, m_lines) in self.get_mlines() {
+            unsafe {
+                for m_line in m_lines {
+                    if !glib::g_list_find(m_line.ptypes, pt as *const _).is_null() {
+                        let attr = ffi::sdp::janus_sdp_attribute_create(name.as_ptr(), contents.as_ptr());
+                        ffi::sdp::janus_sdp_attribute_add_to_mline(m_line as *mut _, attr as *mut _);
+                    }
+                }
+            }
+        }
+    }
+
     /// Rewrites any references from one dynamically assigned payload type in this SDP to another dynamically assigned
     /// payload type.
     pub fn rewrite_payload_type(&mut self, from: i32, to: i32) {
