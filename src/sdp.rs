@@ -218,7 +218,7 @@ impl Sdp {
                 ml_node = node.next;
             }
             result
-	}
+        }
     }
 
     /// Writes this SDP into an owned C-style string.
@@ -290,7 +290,7 @@ unsafe impl Send for Sdp {}
 /// Given an SDP offer from a client, generates an SDP answer.
 /// (This has to be a macro because `generate_answer` is variadic.)
 macro_rules! answer_sdp {
-    ($sdp:expr $(, $param:expr, $value:expr)* $(,)*) => {{
+    ($sdp:expr $(, $param:expr, $value:expr)* $(,)*) => {
         unsafe {
             let result = $crate::sdp::generate_answer(
                 $sdp.ptr,
@@ -299,14 +299,14 @@ macro_rules! answer_sdp {
             );
             $crate::sdp::Sdp::new(result).expect("Mysterious error generating SDP answer :(")
         }
-    }}
+    }
 }
 
 #[macro_export]
 /// Generates an SDP offer given some parameters.
 /// (This has to be a macro because `generate_offer` is variadic.)
 macro_rules! offer_sdp {
-    ($name:expr, $address:expr $(, $param:expr, $value:expr)* $(,)*) => {{
+    ($name:expr, $address:expr $(, $param:expr, $value:expr)* $(,)*) => {
         unsafe {
             let result = $crate::sdp::generate_offer(
                 $name,
@@ -316,5 +316,5 @@ macro_rules! offer_sdp {
             );
             $crate::sdp::Sdp::new(result).expect("Mysterious error generating SDP offer :(")
         }
-    }}
+    }
 }
