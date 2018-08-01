@@ -8,14 +8,14 @@ Library for creating Rust plugins and event handlers for [Janus](https://janus.c
 
 ``` toml
 [dependencies]
-janus-plugin = "0.11.0"
+janus-plugin = "0.11.1"
 ```
 
 If you want to build a version compatible with Janus >= 0.3 (which is more recent than e.g. Ubuntu's version), then use the `refcount` feature:
 
 ``` toml
 [dependencies]
-janus-plugin = { version = "0.11.0", features = ["refcount"] }
+janus-plugin = { version = "0.11.1", features = ["refcount"] }
 ```
 
 
