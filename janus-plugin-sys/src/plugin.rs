@@ -75,6 +75,7 @@ pub struct janus_plugin {
         message: *mut json_t,
         jsep: *mut json_t,
     ) -> *mut janus_plugin_result,
+    pub handle_admin_message: unsafe extern "C" fn(message: *mut json_t) -> *mut json_t,
     pub setup_media: unsafe extern "C" fn(handle: *mut janus_plugin_session),
     pub incoming_rtp: unsafe extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
     pub incoming_rtcp: unsafe extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
