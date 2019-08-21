@@ -70,12 +70,12 @@ impl JanssonValue {
     }
 
     /// Decodes a JSON string slice into a Jansson value, returning an error if decoding fails.
-    pub fn from_str(input: &str, decoding_flags: JanssonDecodingFlags) -> Result<Self, Box<Error + Send + Sync>> {
+    pub fn from_str(input: &str, decoding_flags: JanssonDecodingFlags) -> Result<Self, Box<dyn Error + Send + Sync>> {
         Self::from_cstr(&CString::new(input)?, decoding_flags)
     }
 
     /// Decodes a JSON C-style string into a Jansson value, returning an error if decoding fails.
-    pub fn from_cstr(input: &CStr, decoding_flags: JanssonDecodingFlags) -> Result<Self, Box<Error + Send + Sync>> {
+    pub fn from_cstr(input: &CStr, decoding_flags: JanssonDecodingFlags) -> Result<Self, Box<dyn Error + Send + Sync>> {
         unsafe {
             let mut error: jansson_sys::json_error_t = mem::uninitialized();
             let result = jansson_sys::json_loads(input.as_ptr(), decoding_flags.bits(), &mut error as *mut _);
