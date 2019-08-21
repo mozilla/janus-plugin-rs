@@ -157,7 +157,7 @@ mod tests {
             json_array_insert_new(ys, 1, json_integer(2));
             json_object_set_new(x, cstr!("g"), ys);
             let json = r#"{"a": "alpha", "b": true, "c": false, "d": 42, "e": 1.25, "f": null, "g": [1, 2, 3]}"#;
-            assert_eq!(json, CStr::from_ptr(json_dumps(x, 0)).to_str().unwrap());
+            assert_eq!(json, CStr::from_ptr(json_dumps(x, 0x80)).to_str().unwrap());
         }
     }
 

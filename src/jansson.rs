@@ -138,7 +138,7 @@ mod tests {
     fn round_trip() {
         let json = r#"{"a": "alpha", "b": true, "c": false, "d": 42, "e": 1.25, "f": null, "g": [1, 2, 3]}"#;
         let result = JanssonValue::from_str(json, JanssonDecodingFlags::empty()).unwrap();
-        assert_eq!(json, result.to_libcstring(JanssonEncodingFlags::empty()).to_str().unwrap());
+        assert_eq!(json, result.to_libcstring(JanssonEncodingFlags::JSON_SORT_KEYS).to_str().unwrap());
     }
 
     #[test]
