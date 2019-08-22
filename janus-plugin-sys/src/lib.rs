@@ -10,7 +10,6 @@ pub mod events;
 pub mod rtcp;
 pub mod sdp;
 
-#[cfg(feature="refcount")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct janus_refcount {
@@ -26,6 +25,5 @@ extern "C" {
     pub fn janus_get_api_error(error: c_int) -> *const c_char;
     pub fn janus_vprintf(format: *const c_char, ...);
 
-    #[cfg(feature="refcount")]
     pub static refcount_debug: c_int;
 }

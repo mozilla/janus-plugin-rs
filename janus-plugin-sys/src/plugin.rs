@@ -28,17 +28,6 @@ pub enum janus_plugin_result_type {
     JANUS_PLUGIN_OK_WAIT = 1,
 }
 
-#[cfg(not(feature="refcount"))]
-#[repr(C)]
-#[derive(Debug)]
-pub struct janus_plugin_session {
-    pub gateway_handle: *mut c_void,
-    pub plugin_handle: *mut c_void,
-    pub stopped_bitfield: u8, // todo: clean this up
-    pub __padding: [u8; 7usize],
-}
-
-#[cfg(feature="refcount")]
 #[repr(C)]
 #[derive(Debug)]
 pub struct janus_plugin_session {

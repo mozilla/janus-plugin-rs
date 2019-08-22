@@ -11,14 +11,6 @@ Library for creating Rust plugins and event handlers for [Janus](https://janus.c
 janus-plugin = "0.11.1"
 ```
 
-If you want to build a version compatible with Janus >= 0.3 (which is more recent than e.g. Ubuntu's version), then use the `refcount` feature:
-
-``` toml
-[dependencies]
-janus-plugin = { version = "0.11.1", features = ["refcount"] }
-```
-
-
 ## Building
 
 Requires the [Jansson](http://www.digip.org/jansson/) native library (Ubuntu: `libjansson-dev`) to link against; tested as compatible with versions >= 2.5.
