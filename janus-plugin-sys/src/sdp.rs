@@ -95,10 +95,5 @@ extern "C" {
     pub fn janus_sdp_get_codec_pt(sdp: *mut janus_sdp, codec: *const c_char) -> c_int;
     pub fn janus_sdp_get_codec_name(sdp: *mut janus_sdp, pt: c_int) -> *const c_char;
     pub fn janus_sdp_get_codec_rtpmap(codec: *const c_char) -> *const c_char;
-
-    #[cfg(not(feature="refcount"))]
-    pub fn janus_sdp_free(sdp: *mut janus_sdp);
-
-    #[cfg(feature="refcount")]
     pub fn janus_sdp_destroy(sdp: *mut janus_sdp);
 }

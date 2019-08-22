@@ -5,7 +5,6 @@ use std::ffi::CString;
 pub use ffi::janus_refcount as ReferenceCount;
 
 /// Atomically increment the given reference count by 1.
-#[cfg(feature="refcount")]
 pub fn increase(refcount: &ReferenceCount) {
     let field = &refcount.count;
     unsafe {
@@ -18,7 +17,6 @@ pub fn increase(refcount: &ReferenceCount) {
 }
 
 /// Atomically decrement the given reference count by 1. If it's 0, call free.
-#[cfg(feature="refcount")]
 pub fn decrease(refcount: &ReferenceCount) {
     let field = &refcount.count;
     unsafe {

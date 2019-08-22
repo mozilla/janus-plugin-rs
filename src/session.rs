@@ -81,7 +81,6 @@ impl<T> Deref for SessionWrapper<T> {
     }
 }
 
-#[cfg(feature="refcount")]
 impl<T> Drop for SessionWrapper<T> {
     fn drop(&mut self) {
         unsafe {
@@ -99,7 +98,7 @@ unsafe impl<T: Sync> Sync for SessionWrapper<T> {}
 unsafe impl<T: Send> Send for SessionWrapper<T> {}
 
 // todo: port to refcount branch
-#[cfg(not(feature="refcount"))]
+/*
 #[cfg(test)]
 mod tests {
 
@@ -122,3 +121,4 @@ mod tests {
         assert_eq!(unsafe { SessionWrapper::<State>::from_ptr(ptr).unwrap().state.0 }, 42);
     }
 }
+*/

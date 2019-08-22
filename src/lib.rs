@@ -32,8 +32,6 @@ pub mod sdp;
 pub mod session;
 pub mod jansson;
 pub mod utils;
-
-#[cfg(feature="refcount")]
 pub mod refcount;
 
 bitflags! {
