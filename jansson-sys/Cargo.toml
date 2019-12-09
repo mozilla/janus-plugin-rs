@@ -2,7 +2,7 @@
 name = "jansson-sys"
 version = "0.1.0"
 edition = "2018"
-authors = ["Marshall Quander <marshall@quander.me>"]
+authors = ["Marshall Polaris <marshall@pol.rs>"]
 description = "Native bindings for Jansson, the C JSON library."
 repository = "https://github.com/mozilla/janus-plugin-rs"
 license = "MPL-2.0"
