@@ -57,8 +57,8 @@ impl Default for LogParameters {
 /// how the log message is formatted.
 pub fn log(level: LogLevel, message: fmt::Arguments, params: LogParameters) {
     unsafe {
-        let output = CString::new(print_log(level, message, params));
-        ffi::janus_vprintf(output.expect("Null character in log message :(").as_ptr())
+        let output = CString::new(print_log(level, message, params)).expect("Null character in log message :(");
+        ffi::janus_vprintf(output.as_ptr())
     }
 }
 
