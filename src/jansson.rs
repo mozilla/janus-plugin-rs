@@ -1,6 +1,6 @@
 /// Utilities to work with Jansson JSON values, which are exposed in the Janus plugin API.
-extern crate libc;
 
+use bitflags::bitflags;
 use jansson_sys;
 use std::error::Error;
 use std::fmt;
@@ -9,7 +9,7 @@ use std::mem::MaybeUninit;
 use std::ops::Deref;
 use std::slice;
 use std::str;
-use utils::LibcString;
+use crate::utils::LibcString;
 
 /// A pointer to a raw Jansson value struct.
 pub type RawJanssonValue = jansson_sys::json_t;

@@ -1,5 +1,5 @@
 /// Utilities to make it easier to maintain Janus session state between plugin callbacks.
-use super::PluginSession;
+use crate::PluginSession;
 use std::error::Error;
 use std::hash::{Hash, Hasher};
 use std::fmt;

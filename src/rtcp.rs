@@ -5,7 +5,7 @@
 /// <https://tools.ietf.org/html/rfc5104> (definition of FIR, others)
 /// <https://tools.ietf.org/html/draft-alvestrand-rmcat-remb-03> (definition of REMB)
 
-use super::ffi;
+use janus_plugin_sys as ffi;
 
 /// Returns whether this RTCP packet is a FIR packet.
 pub fn has_fir(packet: &[i8]) -> bool {

@@ -34,7 +34,7 @@ pub struct janus_plugin_session {
     pub gateway_handle: *mut c_void,
     pub plugin_handle: *mut c_void,
     pub stopped: c_int,
-    pub ref_: ::janus_refcount,
+    pub ref_: crate::janus_refcount,
 }
 
 #[repr(C)]

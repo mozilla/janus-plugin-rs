@@ -1,14 +1,11 @@
 /// Utilities for writing messages to the Janus log.
-extern crate chrono;
-extern crate colored;
-
-pub use super::ffi::janus_log_level as JANUS_LOG_LEVEL;
-use self::chrono::{DateTime, Local};
-use self::colored::{Color, Colorize};
-use super::ffi;
+use chrono::{DateTime, Local};
+use colored::{Color, Colorize};
 use std::ffi::CString;
 use std::fmt::Write;
 use std::fmt;
+use janus_plugin_sys as ffi;
+pub use ffi::janus_log_level as JANUS_LOG_LEVEL;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 /// A Janus log level. Lower is more severe.
@@ -91,7 +88,7 @@ macro_rules! janus_log_enabled {
 macro_rules! janus_log {
     ($lvl:expr, $($arg:tt)+) => ({
         let lvl = $lvl;
-        if janus_log_enabled!(lvl) {
+        if $crate::janus_log_enabled!(lvl) {
             $crate::debug::log(lvl, format_args!($($arg)+), $crate::debug::LogParameters::default())
         }
     })
@@ -99,44 +96,44 @@ macro_rules! janus_log {
 
 #[macro_export]
 macro_rules! janus_fatal {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Fatal, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Fatal, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_err {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Err, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Err, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_warn {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Warn, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Warn, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_info {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Info, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Info, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_verb {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Verb, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Verb, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_huge {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Huge, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Huge, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_dbg {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Dbg, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Dbg, $($arg)+))
 }
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use super::chrono::TimeZone;
+    use chrono::TimeZone;
 
     fn fixed_clock(year: i32, month: u32, day: u32, hour: u32, min: u32, sec: u32) -> DateTime<Local> {
         Local.ymd(year, month, day).and_hms(hour, min, sec)
