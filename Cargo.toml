@@ -5,6 +5,7 @@ edition = "2018"
 authors = ["Marshall Polaris <marshall@pol.rs>"]
 description = "Library for creating plugins for Janus, the WebRTC gateway."
 repository = "https://github.com/mozilla/janus-plugin-rs"
+readme = "README.md"
 license = "MPL-2.0"
 
 [workspace]
