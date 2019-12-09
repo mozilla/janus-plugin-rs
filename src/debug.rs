@@ -88,7 +88,7 @@ macro_rules! janus_log_enabled {
 macro_rules! janus_log {
     ($lvl:expr, $($arg:tt)+) => ({
         let lvl = $lvl;
-        if janus_log_enabled!(lvl) {
+        if $crate::janus_log_enabled!(lvl) {
             $crate::debug::log(lvl, format_args!($($arg)+), $crate::debug::LogParameters::default())
         }
     })
@@ -96,37 +96,37 @@ macro_rules! janus_log {
 
 #[macro_export]
 macro_rules! janus_fatal {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Fatal, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Fatal, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_err {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Err, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Err, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_warn {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Warn, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Warn, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_info {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Info, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Info, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_verb {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Verb, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Verb, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_huge {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Huge, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Huge, $($arg)+))
 }
 
 #[macro_export]
 macro_rules! janus_dbg {
-    ($($arg:tt)+) => (janus_log!($crate::debug::LogLevel::Dbg, $($arg)+))
+    ($($arg:tt)+) => ($crate::janus_log!($crate::debug::LogLevel::Dbg, $($arg)+))
 }
 
 #[cfg(test)]
