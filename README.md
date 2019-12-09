@@ -11,6 +11,12 @@ Library for creating Rust plugins and event handlers for [Janus](https://janus.c
 janus-plugin = "0.11.1"
 ```
 
+## Compatibility
+
+Currently compatible with Janus versions in range [0.7.3, 0.7.6]; Janus makes breaking changes relatively frequently to
+the plugin API, so expect this library to require updating and recompilation for plugins to continue to work with new
+Janus versions.
+
 ## Building
 
 Requires the [Jansson](http://www.digip.org/jansson/) native library (Ubuntu: `libjansson-dev`) to link against; tested as compatible with versions >= 2.5.
