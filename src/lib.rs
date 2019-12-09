@@ -1,7 +1,6 @@
 #![deny(missing_debug_implementations)]
 
 use janus_plugin_sys as ffi;
-use glib_sys as glib;
 use bitflags::bitflags;
 pub use debug::LogLevel;
 pub use debug::log;

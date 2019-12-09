@@ -1,11 +1,11 @@
 /// Utilities for writing messages to the Janus log.
-pub use super::ffi::janus_log_level as JANUS_LOG_LEVEL;
 use chrono::{DateTime, Local};
 use colored::{Color, Colorize};
-use janus_plugin_sys as ffi;
 use std::ffi::CString;
 use std::fmt::Write;
 use std::fmt;
+use janus_plugin_sys as ffi;
+pub use ffi::janus_log_level as JANUS_LOG_LEVEL;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 /// A Janus log level. Lower is more severe.

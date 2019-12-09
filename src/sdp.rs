@@ -1,8 +1,8 @@
 /// Utilities to write SDP offers and answers using Janus's SDP parsing machinery.
 
-use janus_plugin_sys as ffi;
-use glib_sys as glib;
+use glib_sys;
 use libc;
+use janus_plugin_sys as ffi;
 use serde::de::{self, Deserialize, Deserializer, Unexpected, Visitor};
 use serde::ser::{Serialize, Serializer};
 pub use ffi::sdp::janus_sdp_generate_answer as generate_answer;
@@ -171,7 +171,7 @@ impl Sdp {
         for (_media, m_lines) in self.get_mlines() {
             unsafe {
                 for m_line in m_lines {
-                    if !glib::g_list_find(m_line.ptypes, pt as *const _).is_null() {
+                    if !glib_sys::g_list_find(m_line.ptypes, pt as *const _).is_null() {
                         let attr = ffi::sdp::janus_sdp_attribute_create(name.as_ptr(), contents.as_ptr());
                         ffi::sdp::janus_sdp_attribute_add_to_mline(m_line as *mut _, attr as *mut _);
                     }
@@ -189,10 +189,10 @@ impl Sdp {
             unsafe {
                 for m_line in m_lines {
                     // 1. replace the payload type ID in this media line's payload type list
-                    if !glib::g_list_find(m_line.ptypes, from as *const _).is_null() {
+                    if !glib_sys::g_list_find(m_line.ptypes, from as *const _).is_null() {
                         // payload type data in the list is cast to pointers
-                        m_line.ptypes = glib::g_list_remove(m_line.ptypes, from as *const _);
-                        m_line.ptypes = glib::g_list_prepend(m_line.ptypes, to as *mut _);
+                        m_line.ptypes = glib_sys::g_list_remove(m_line.ptypes, from as *const _);
+                        m_line.ptypes = glib_sys::g_list_prepend(m_line.ptypes, to as *mut _);
                     }
                     // 2. rewrite the values of attribute lines with the old payload type to have the new payload type
                     let mut attr_node = m_line.attributes;
@@ -209,8 +209,8 @@ impl Sdp {
                                 // value string is copied into the attribute
                                 let new_val = CString::new(value.replacen(&from_pt_string, &to_pt_string, 1)).unwrap();
                                 let new_attr = ffi::sdp::janus_sdp_attribute_create(attr.name, new_val.as_ptr());
-                                m_line.attributes = glib::g_list_prepend(m_line.attributes, new_attr as *mut _);
-                                m_line.attributes = glib::g_list_delete_link(m_line.attributes, attr_node);
+                                m_line.attributes = glib_sys::g_list_prepend(m_line.attributes, new_attr as *mut _);
+                                m_line.attributes = glib_sys::g_list_delete_link(m_line.attributes, attr_node);
                                 ffi::sdp::janus_sdp_attribute_destroy(data);
                             }
                         }
