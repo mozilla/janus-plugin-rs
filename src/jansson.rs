@@ -5,7 +5,7 @@ use jansson_sys;
 use std::error::Error;
 use std::fmt;
 use std::ffi::{CStr, CString};
-use std::mem;
+use std::mem::MaybeUninit;
 use std::ops::Deref;
 use std::slice;
 use std::str;
@@ -77,12 +77,12 @@ impl JanssonValue {
     /// Decodes a JSON C-style string into a Jansson value, returning an error if decoding fails.
     pub fn from_cstr(input: &CStr, decoding_flags: JanssonDecodingFlags) -> Result<Self, Box<dyn Error + Send + Sync>> {
         unsafe {
-            let mut error: jansson_sys::json_error_t = mem::uninitialized();
-            let result = jansson_sys::json_loads(input.as_ptr(), decoding_flags.bits(), &mut error as *mut _);
+            let mut error = MaybeUninit::<jansson_sys::json_error_t>::uninit();
+            let result = jansson_sys::json_loads(input.as_ptr(), decoding_flags.bits(), error.as_mut_ptr());
             match Self::from_raw(result) {
                 Some(val) => Ok(val),
                 None => {
-                    let ptr = &error.text as *const _;
+                    let ptr = &error.assume_init().text as *const _;
                     let len = libc::strlen(ptr);
                     let sli = slice::from_raw_parts(ptr as *mut u8, len);
                     Err(From::from(str::from_utf8(sli)?))

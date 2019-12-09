@@ -24,8 +24,8 @@ pub enum LogLevel {
 
 impl LogLevel {
     /// The color associated with each log level's label (if colors are enabled.)
-    fn color(&self) -> Option<Color> {
-        match *self {
+    fn color(self) -> Option<Color> {
+        match self {
             LogLevel::Fatal => Some(Color::Magenta),
             LogLevel::Err => Some(Color::Red),
             LogLevel::Warn => Some(Color::Yellow),
@@ -57,8 +57,8 @@ impl Default for LogParameters {
 /// how the log message is formatted.
 pub fn log(level: LogLevel, message: fmt::Arguments, params: LogParameters) {
     unsafe {
-        let output = CString::new(print_log(level, message, params));
-        ffi::janus_vprintf(output.expect("Null character in log message :(").as_ptr())
+        let output = CString::new(print_log(level, message, params)).expect("Null character in log message :(");
+        ffi::janus_vprintf(output.as_ptr())
     }
 }
 

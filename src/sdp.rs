@@ -32,7 +32,7 @@ macro_rules! c_str {
 }
 
 /// SDP attributes which may refer to a specific RTP payload type.
-static MEDIA_PAYLOAD_ATTRIBUTES: [&'static str; 3] = ["rtpmap", "fmtp", "rtcp-fb"];
+static MEDIA_PAYLOAD_ATTRIBUTES: [&str; 3] = ["rtpmap", "fmtp", "rtcp-fb"];
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// Available Janus audio codecs. See utils.c.
@@ -46,11 +46,11 @@ pub enum AudioCodec {
 }
 
 impl AudioCodec {
-    pub fn to_str(&self) -> &'static str {
+    pub fn to_str(self) -> &'static str {
         self.to_cstr().to_str().unwrap()
     }
-    pub fn to_cstr(&self) -> &'static CStr {
-        match *self {
+    pub fn to_cstr(self) -> &'static CStr {
+        match self {
             AudioCodec::Opus => c_str!("opus"),
             AudioCodec::Pcmu => c_str!("pcmu"),
             AudioCodec::Pcma => c_str!("pcma"),
@@ -70,11 +70,11 @@ pub enum VideoCodec {
 }
 
 impl VideoCodec {
-    pub fn to_str(&self) -> &'static str {
+    pub fn to_str(self) -> &'static str {
         self.to_cstr().to_str().unwrap()
     }
-    pub fn to_cstr(&self) -> &'static CStr {
-        match *self {
+    pub fn to_cstr(self) -> &'static CStr {
+        match self {
             VideoCodec::Vp8 => c_str!("vp8"),
             VideoCodec::Vp9 => c_str!("vp9"),
             VideoCodec::H264 => c_str!("h264"),
