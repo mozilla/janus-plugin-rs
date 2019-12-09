@@ -4,7 +4,7 @@ use janus_plugin_sys as ffi;
 use bitflags::bitflags;
 pub use debug::LogLevel;
 pub use debug::log;
-pub use crate::jansson::{JanssonDecodingFlags, JanssonEncodingFlags, JanssonValue, RawJanssonValue};
+pub use jansson::{JanssonDecodingFlags, JanssonEncodingFlags, JanssonValue, RawJanssonValue};
 pub use session::SessionWrapper;
 pub use ffi::events::janus_eventhandler as EventHandler;
 pub use ffi::plugin::janus_callbacks as PluginCallbacks;
