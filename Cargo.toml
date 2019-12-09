@@ -1,6 +1,7 @@
 [package]
 name = "janus-plugin"
 version = "0.11.1"
+edition = "2018"
 authors = ["Marshall Quander <marshall@quander.me>"]
 description = "Library for creating plugins for Janus, the WebRTC gateway."
 repository = "https://github.com/mozilla/janus-plugin-rs"

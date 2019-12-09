@@ -1,11 +1,8 @@
 /// Utilities for writing messages to the Janus log.
-extern crate chrono;
-extern crate colored;
-
 pub use super::ffi::janus_log_level as JANUS_LOG_LEVEL;
-use self::chrono::{DateTime, Local};
-use self::colored::{Color, Colorize};
-use super::ffi;
+use chrono::{DateTime, Local};
+use colored::{Color, Colorize};
+use janus_plugin_sys as ffi;
 use std::ffi::CString;
 use std::fmt::Write;
 use std::fmt;
@@ -136,7 +133,7 @@ macro_rules! janus_dbg {
 mod tests {
 
     use super::*;
-    use super::chrono::TimeZone;
+    use chrono::TimeZone;
 
     fn fixed_clock(year: i32, month: u32, day: u32, hour: u32, min: u32, sec: u32) -> DateTime<Local> {
         Local.ymd(year, month, day).and_hms(hour, min, sec)

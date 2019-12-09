@@ -131,8 +131,7 @@ pub unsafe fn json_decref(json: *mut json_t) {
 }
 
 #[cfg(test)]
-#[macro_use]
-extern crate cstr_macro;
+use cstr_macro::cstr;
 
 #[cfg(test)]
 mod tests {

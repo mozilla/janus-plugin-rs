@@ -1,16 +1,11 @@
 #![deny(missing_debug_implementations)]
 
-#[macro_use]
-extern crate bitflags;
-extern crate jansson_sys;
-extern crate janus_plugin_sys as ffi;
-extern crate glib_sys as glib;
-extern crate libc;
-extern crate serde;
-
+use janus_plugin_sys as ffi;
+use glib_sys as glib;
+use bitflags::bitflags;
 pub use debug::LogLevel;
 pub use debug::log;
-pub use jansson::{JanssonDecodingFlags, JanssonEncodingFlags, JanssonValue, RawJanssonValue};
+pub use crate::jansson::{JanssonDecodingFlags, JanssonEncodingFlags, JanssonValue, RawJanssonValue};
 pub use session::SessionWrapper;
 pub use ffi::events::janus_eventhandler as EventHandler;
 pub use ffi::plugin::janus_callbacks as PluginCallbacks;

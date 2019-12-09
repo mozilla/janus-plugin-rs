@@ -1,8 +1,8 @@
 /// Wrapper types and helpers for working with the Janus FFI layer.
 
-use super::glib;
-use super::libc;
-use super::serde::ser::{self, Serialize, Serializer};
+use glib_sys as glib;
+use libc;
+use serde::ser::{self, Serialize, Serializer};
 use std::error::Error;
 use std::ffi::CStr;
 use std::ops::Deref;

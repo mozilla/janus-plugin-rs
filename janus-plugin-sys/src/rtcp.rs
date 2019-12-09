@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 
-use super::glib_sys::{gboolean, GSList};
+use glib_sys::{gboolean, GSList};
 use std::os::raw::{c_char, c_int, c_uint};
 
 extern "C" {

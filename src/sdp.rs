@@ -1,10 +1,10 @@
 /// Utilities to write SDP offers and answers using Janus's SDP parsing machinery.
 
-use super::ffi;
-use super::glib;
-use super::libc;
-use super::serde::de::{self, Deserialize, Deserializer, Unexpected, Visitor};
-use super::serde::ser::{Serialize, Serializer};
+use janus_plugin_sys as ffi;
+use glib_sys as glib;
+use libc;
+use serde::de::{self, Deserialize, Deserializer, Unexpected, Visitor};
+use serde::ser::{Serialize, Serializer};
 pub use ffi::sdp::janus_sdp_generate_answer as generate_answer;
 pub use ffi::sdp::janus_sdp_generate_offer as generate_offer;
 use std::collections::HashMap;
@@ -13,7 +13,7 @@ use std::fmt;
 use std::ffi::{CStr, CString};
 use std::ops::Deref;
 use std::str;
-use utils::GLibString;
+use crate::utils::GLibString;
 
 pub type RawSdp = ffi::sdp::janus_sdp;
 pub type RawMLine = ffi::sdp::janus_sdp_mline;

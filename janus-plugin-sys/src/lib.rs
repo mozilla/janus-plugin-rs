@@ -1,8 +1,6 @@
 #![allow(non_camel_case_types)]
 #![deny(missing_debug_implementations)]
 
-extern crate glib_sys;
-extern crate jansson_sys;
 use std::os::raw::{c_char, c_int};
 
 pub mod plugin;
