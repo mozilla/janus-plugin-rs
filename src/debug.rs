@@ -24,8 +24,8 @@ pub enum LogLevel {
 
 impl LogLevel {
     /// The color associated with each log level's label (if colors are enabled.)
-    fn color(&self) -> Option<Color> {
-        match *self {
+    fn color(self) -> Option<Color> {
+        match self {
             LogLevel::Fatal => Some(Color::Magenta),
             LogLevel::Err => Some(Color::Red),
             LogLevel::Warn => Some(Color::Yellow),

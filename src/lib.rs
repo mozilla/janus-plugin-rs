@@ -59,7 +59,7 @@ pub type JanusResult = Result<(), JanusError>;
 
 impl JanusError {
     /// Returns Janus's description text for this error.
-    pub fn to_cstr(&self) -> &'static CStr {
+    pub fn to_cstr(self) -> &'static CStr {
         unsafe { CStr::from_ptr(ffi::janus_get_api_error(self.code)) }
     }
     /// Converts a Janus result code to either success or a potential error.
