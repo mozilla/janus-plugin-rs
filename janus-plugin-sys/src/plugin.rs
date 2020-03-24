@@ -59,7 +59,7 @@ pub struct janus_plugin_rtp_extensions {
 #[derive(Debug)]
 pub struct janus_plugin_rtp {
     pub video :  c_char,
-    pub buffer : * c_char,
+    pub buffer : *mut c_char,
     pub length : c_short,
     pub extensions : janus_plugin_rtp_extensions,
 }
@@ -68,7 +68,7 @@ pub struct janus_plugin_rtp {
 #[derive(Debug)]
 pub struct janus_plugin_rtcp {
     pub video : c_char,
-    pub buffer : * c_char,
+    pub buffer : *mut c_char,
     pub length : c_short,   
 }
 
