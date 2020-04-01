@@ -1,5 +1,5 @@
 use jansson_sys::json_t;
-use std::os::raw::{c_char, c_int, c_void};
+use std::os::raw::{c_char, c_int, c_void, c_short};
 
 #[repr(C)]
 #[derive(Debug)]
@@ -11,9 +11,9 @@ pub struct janus_callbacks {
         message: *mut json_t,
         jsep: *mut json_t,
     ) -> c_int,
-    pub relay_rtp: extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
-    pub relay_rtcp: extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
-    pub relay_data: extern "C" fn(handle: *mut janus_plugin_session, label: *mut c_char, buf: *mut c_char, len: c_int),
+    pub relay_rtp: extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_rtp),
+    pub relay_rtcp: extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_rtcp),
+    pub relay_data: extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_data),
     pub close_pc: extern "C" fn(handle: *mut janus_plugin_session),
     pub end_session: extern "C" fn(handle: *mut janus_plugin_session),
     pub events_is_enabled: extern "C" fn() -> c_int,
@@ -47,6 +47,42 @@ pub struct janus_plugin_result {
 
 #[repr(C)]
 #[derive(Debug)]
+pub struct janus_plugin_rtp_extensions {
+    pub audio_level : c_char,
+    pub audio_level_vad : c_char,
+    pub video_rotation : c_short,
+    pub video_back_camera : c_char,
+    pub video_flipped : c_char,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct janus_plugin_rtp {
+    pub video :  c_char,
+    pub buffer : *mut c_char,
+    pub length : c_short,
+    pub extensions : janus_plugin_rtp_extensions,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct janus_plugin_rtcp {
+    pub video : c_char,
+    pub buffer : *mut c_char,
+    pub length : c_short,   
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct janus_plugin_data {
+    pub label : *mut c_char,
+    pub binary : c_char,
+    pub buffer : *mut c_char,
+    pub length : c_short,
+}
+
+#[repr(C)]
+#[derive(Debug)]
 pub struct janus_plugin {
     pub init: unsafe extern "C" fn(callback: *mut janus_callbacks, config_path: *const c_char) -> c_int,
     pub destroy: unsafe extern "C" fn(),
@@ -66,9 +102,9 @@ pub struct janus_plugin {
     ) -> *mut janus_plugin_result,
     pub handle_admin_message: unsafe extern "C" fn(message: *mut json_t) -> *mut json_t,
     pub setup_media: unsafe extern "C" fn(handle: *mut janus_plugin_session),
-    pub incoming_rtp: unsafe extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
-    pub incoming_rtcp: unsafe extern "C" fn(handle: *mut janus_plugin_session, video: c_int, buf: *mut c_char, len: c_int),
-    pub incoming_data: unsafe extern "C" fn(handle: *mut janus_plugin_session, label: *mut c_char, buf: *mut c_char, len: c_int),
+    pub incoming_rtp: unsafe extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_rtp),
+    pub incoming_rtcp: unsafe extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_rtcp),
+    pub incoming_data: unsafe extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_data),
     pub slow_link: unsafe extern "C" fn(handle: *mut janus_plugin_session, uplink: c_int, video: c_int),
     pub hangup_media: unsafe extern "C" fn(handle: *mut janus_plugin_session),
     pub destroy_session: unsafe extern "C" fn(handle: *mut janus_plugin_session, error: *mut c_int),
