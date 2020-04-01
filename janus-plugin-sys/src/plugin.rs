@@ -14,6 +14,8 @@ pub struct janus_callbacks {
     pub relay_rtp: extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_rtp),
     pub relay_rtcp: extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_rtcp),
     pub relay_data: extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_data),
+    pub send_pli: extern "C" fn(handle: *mut janus_plugin_session),
+    pub send_remb: extern "C" fn(handle: *mut janus_plugin_session, bitrate: c_int),
     pub close_pc: extern "C" fn(handle: *mut janus_plugin_session),
     pub end_session: extern "C" fn(handle: *mut janus_plugin_session),
     pub events_is_enabled: extern "C" fn() -> c_int,
@@ -69,7 +71,7 @@ pub struct janus_plugin_rtp {
 pub struct janus_plugin_rtcp {
     pub video : c_char,
     pub buffer : *mut c_char,
-    pub length : c_short,   
+    pub length : c_short,
 }
 
 #[repr(C)]
