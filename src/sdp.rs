@@ -67,6 +67,8 @@ pub enum VideoCodec {
     Vp8,
     Vp9,
     H264,
+    Av1,
+    H265,
 }
 
 impl VideoCodec {
@@ -78,6 +80,8 @@ impl VideoCodec {
             VideoCodec::Vp8 => c_str!("vp8"),
             VideoCodec::Vp9 => c_str!("vp9"),
             VideoCodec::H264 => c_str!("h264"),
+            VideoCodec::Av1 => c_str!("av1"),
+            VideoCodec::H265 => c_str!("h265"),
         }
     }
 }
