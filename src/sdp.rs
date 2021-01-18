@@ -107,16 +107,27 @@ pub enum OfferAnswerParameters {
     AudioCodec = 6,
     /// The VideoCodec for the video stream.
     VideoCodec = 7,
+    /// Use this profile for VP9
+    Vp9Profile = 8,
+    /// Use this profile for H.264
+    H264Profile = 9,
     /// The payload type for the audio stream.
-    AudioPayloadType = 8,
+    AudioPayloadType = 10,
     /// The payload type for the video stream.
-    VideoPayloadType = 9,
+    VideoPayloadType = 11,
     /// Whether to negotiate telephone events.
-    AudioDtmf = 10,
+    AudioDtmf = 12,
+    /// Add a custom fmtp string for audio
+    AudioFmtp = 13,
+    /// Add a custom fmtp string for video
+    /// @note This property is ignored if Vp9Profile or H264Profile is used on a compliant codec.
+    VideoFmtp = 14,
     /// Whether to add RTCP-FB attributes.
-    VideoRtcpfbDefaults = 11,
-    /// Whether to add attributes for H.264 video.
-    VideoH264Fmtp = 12,
+    VideoRtcpfbDefaults = 15,
+    DataLegacy = 16,
+    AudioExtension = 17,
+    VideoExtension = 18,
+    AcceptExtmap = 19,
 }
 
 /// An SDP session description.
