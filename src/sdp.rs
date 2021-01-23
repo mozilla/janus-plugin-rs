@@ -181,6 +181,16 @@ impl Sdp {
         }
     }
 
+    /// Gets the payload type number for a codec and provided video profile in this SDP, or None if the codec isn't present with the provided video profile.
+    pub fn get_payload_type_full(&self, codec_name: &CStr, profile: &CStr) -> Option<i32> {
+        unsafe {
+            match ffi::sdp::janus_sdp_get_codec_pt_full(self.ptr, codec_name.as_ptr(), profile.as_ptr()) {
+                err if err < 0 => None,
+                n => Some(n),
+            }
+        }
+    }
+
     /// Adds an attribute for the m-line with the given payload type.
     pub fn add_attribute(&mut self, pt: i32, name: &CStr, contents: &CStr) {
         for (_media, m_lines) in self.get_mlines() {
