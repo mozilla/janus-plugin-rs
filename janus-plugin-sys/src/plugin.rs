@@ -1,5 +1,6 @@
 use jansson_sys::json_t;
 use std::os::raw::{c_char, c_int, c_void, c_short};
+use glib_sys::gboolean;
 
 #[repr(C)]
 #[derive(Debug)]
@@ -20,6 +21,8 @@ pub struct janus_callbacks {
     pub end_session: extern "C" fn(handle: *mut janus_plugin_session),
     pub events_is_enabled: extern "C" fn() -> c_int,
     pub notify_event: extern "C" fn(plugin: *mut janus_plugin, handle: *mut janus_plugin_session, event: *mut json_t),
+    pub auth_is_signature_valid: extern "C" fn(plugin: *mut janus_plugin, token: *const c_char) -> gboolean,
+    pub auth_signature_contains: extern "C" fn(plugin: *mut janus_plugin, token: *const c_char, descriptor: *const c_char) -> gboolean,
 }
 
 #[repr(i32)]
@@ -78,6 +81,7 @@ pub struct janus_plugin_rtcp {
 #[derive(Debug)]
 pub struct janus_plugin_data {
     pub label : *mut c_char,
+    pub protocol : *mut c_char,
     pub binary : c_char,
     pub buffer : *mut c_char,
     pub length : c_short,
@@ -107,6 +111,7 @@ pub struct janus_plugin {
     pub incoming_rtp: unsafe extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_rtp),
     pub incoming_rtcp: unsafe extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_rtcp),
     pub incoming_data: unsafe extern "C" fn(handle: *mut janus_plugin_session, packet: *mut janus_plugin_data),
+    pub data_ready: unsafe extern "C" fn(handle: *mut janus_plugin_session),
     pub slow_link: unsafe extern "C" fn(handle: *mut janus_plugin_session, uplink: c_int, video: c_int),
     pub hangup_media: unsafe extern "C" fn(handle: *mut janus_plugin_session),
     pub destroy_session: unsafe extern "C" fn(handle: *mut janus_plugin_session, error: *mut c_int),
