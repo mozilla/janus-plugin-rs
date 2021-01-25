@@ -69,15 +69,12 @@ impl JanusError {
     }
 }
 
-impl Error for JanusError {
-    fn description(&self) -> &'static str {
-        self.to_cstr().to_str().unwrap()
-    }
-}
+impl Error for JanusError {}
 
 impl fmt::Display for JanusError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} (code: {})", self.description(), self.code)
+        write!(f, "{} (code: {})", self.to_cstr().to_str().unwrap()
+, self.code)
     }
 }
 

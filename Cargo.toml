@@ -14,8 +14,8 @@ members = ["janus-plugin-sys", "jansson-sys"]
 [dependencies]
 bitflags = "1.2"
 chrono = "0.4"
-colored = "1.9"
-glib-sys = "0.9"
+colored = "2.0"
+glib-sys = "0.10"
 libc = "0.2"
 serde = "1.0"
 jansson-sys = { path = "jansson-sys", version = "0.1.0" }

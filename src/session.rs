@@ -10,15 +10,11 @@ use std::sync::Arc;
 #[derive(Debug, Clone, Copy)]
 pub struct NullHandleError;
 
-impl Error for NullHandleError {
-    fn description(&self) -> &str {
-        "A null session handle was provided."
-    }
-}
+impl Error for NullHandleError {}
 
 impl fmt::Display for NullHandleError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.description())
+        f.write_str("A null session handle was provided.")
     }
 }
 

@@ -141,15 +141,11 @@ pub struct SdpParseError {
     buffer: Vec<u8>
 }
 
-impl Error for SdpParseError {
-    fn description(&self) -> &str {
-        str::from_utf8(&self.buffer).unwrap_or("SDP parsing failed, but the error was not valid UTF-8 :(")
-    }
-}
+impl Error for SdpParseError {}
 
 impl fmt::Display for SdpParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.description())
+        f.write_str(str::from_utf8(&self.buffer).unwrap_or("SDP parsing failed, but the error was not valid UTF-8 :("))
     }
 }
 
