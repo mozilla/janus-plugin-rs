@@ -1,6 +1,6 @@
 [package]
 name = "janus-plugin-sys"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2018"
 authors = ["Marshall Polaris <marshall@pol.rs>"]
 description = "Native bindings to the Janus plugin API."

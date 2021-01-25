@@ -1,6 +1,6 @@
 [package]
 name = "janus-plugin"
-version = "0.12.0"
+version = "0.13.0"
 edition = "2018"
 authors = ["Marshall Polaris <marshall@pol.rs>"]
 description = "Library for creating plugins for Janus, the WebRTC gateway."
@@ -19,4 +19,4 @@ glib-sys = "0.10"
 libc = "0.2"
 serde = "1.0"
 jansson-sys = { path = "jansson-sys", version = "0.1.0" }
-janus-plugin-sys = { path = "janus-plugin-sys", version = "0.7.0" }
+janus-plugin-sys = { path = "janus-plugin-sys", version = "0.8.0" }
