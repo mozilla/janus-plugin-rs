@@ -2,7 +2,6 @@
 
 [![Documentation](https://docs.rs/janus-plugin/badge.svg)](https://docs.rs/janus-plugin/)
 [![janus-plugin](https://img.shields.io/crates/v/janus-plugin.svg)](https://crates.io/crates/janus-plugin)
-[![Build Status](https://travis-ci.org/mozilla/janus-plugin-rs.svg?branch=master)](https://travis-ci.org/mozilla/janus-plugin-rs)
 
 Library for creating Rust plugins and event handlers for [Janus](https://janus.conf.meetecho.com/). Still moderately unstable.
 
