@@ -3,7 +3,6 @@
 use glib_sys as glib;
 use libc;
 use serde::ser::{self, Serialize, Serializer};
-use std::error::Error;
 use std::ffi::CStr;
 use std::ops::Deref;
 use std::os::raw::c_char;
@@ -39,7 +38,7 @@ impl Serialize for GLibString {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
         match self.to_str() {
             Ok(s) => serializer.serialize_str(s),
-            Err(e) => Err(ser::Error::custom(e.description()))
+            Err(e) => Err(ser::Error::custom(e))
         }
     }
 }
@@ -78,7 +77,7 @@ impl Serialize for LibcString {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
         match self.to_str() {
             Ok(s) => serializer.serialize_str(s),
-            Err(e) => Err(ser::Error::custom(e.description()))
+            Err(e) => Err(ser::Error::custom(e))
         }
     }
 }
