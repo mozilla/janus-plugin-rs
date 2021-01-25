@@ -93,6 +93,7 @@ extern "C" {
     pub fn janus_sdp_generate_offer(name: *const c_char, address: *const c_char, ...) -> *mut janus_sdp;
     pub fn janus_sdp_generate_answer(offer: *mut janus_sdp, ...) -> *mut janus_sdp;
     pub fn janus_sdp_get_codec_pt(sdp: *mut janus_sdp, codec: *const c_char) -> c_int;
+    pub fn janus_sdp_get_codec_pt_full(sdp: *mut janus_sdp, codec: *const c_char, profile: *const c_char) -> c_int;
     pub fn janus_sdp_get_codec_name(sdp: *mut janus_sdp, pt: c_int) -> *const c_char;
     pub fn janus_sdp_get_codec_rtpmap(codec: *const c_char) -> *const c_char;
     pub fn janus_sdp_destroy(sdp: *mut janus_sdp);

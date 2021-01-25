@@ -67,6 +67,8 @@ pub enum VideoCodec {
     Vp8,
     Vp9,
     H264,
+    Av1,
+    H265,
 }
 
 impl VideoCodec {
@@ -78,6 +80,8 @@ impl VideoCodec {
             VideoCodec::Vp8 => c_str!("vp8"),
             VideoCodec::Vp9 => c_str!("vp9"),
             VideoCodec::H264 => c_str!("h264"),
+            VideoCodec::Av1 => c_str!("av1"),
+            VideoCodec::H265 => c_str!("h265"),
         }
     }
 }
@@ -103,16 +107,27 @@ pub enum OfferAnswerParameters {
     AudioCodec = 6,
     /// The VideoCodec for the video stream.
     VideoCodec = 7,
+    /// Use this profile for VP9
+    Vp9Profile = 8,
+    /// Use this profile for H.264
+    H264Profile = 9,
     /// The payload type for the audio stream.
-    AudioPayloadType = 8,
+    AudioPayloadType = 10,
     /// The payload type for the video stream.
-    VideoPayloadType = 9,
+    VideoPayloadType = 11,
     /// Whether to negotiate telephone events.
-    AudioDtmf = 10,
+    AudioDtmf = 12,
+    /// Add a custom fmtp string for audio
+    AudioFmtp = 13,
+    /// Add a custom fmtp string for video
+    /// @note This property is ignored if Vp9Profile or H264Profile is used on a compliant codec.
+    VideoFmtp = 14,
     /// Whether to add RTCP-FB attributes.
-    VideoRtcpfbDefaults = 11,
-    /// Whether to add attributes for H.264 video.
-    VideoH264Fmtp = 12,
+    VideoRtcpfbDefaults = 15,
+    DataLegacy = 16,
+    AudioExtension = 17,
+    VideoExtension = 18,
+    AcceptExtmap = 19,
 }
 
 /// An SDP session description.
@@ -160,6 +175,16 @@ impl Sdp {
     pub fn get_payload_type(&self, codec_name: &CStr) -> Option<i32> {
         unsafe {
             match ffi::sdp::janus_sdp_get_codec_pt(self.ptr, codec_name.as_ptr()) {
+                err if err < 0 => None,
+                n => Some(n),
+            }
+        }
+    }
+
+    /// Gets the payload type number for a codec and provided video profile in this SDP, or None if the codec isn't present with the provided video profile.
+    pub fn get_payload_type_full(&self, codec_name: &CStr, profile: &CStr) -> Option<i32> {
+        unsafe {
+            match ffi::sdp::janus_sdp_get_codec_pt_full(self.ptr, codec_name.as_ptr(), profile.as_ptr()) {
                 err if err < 0 => None,
                 n => Some(n),
             }
