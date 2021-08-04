@@ -27,7 +27,7 @@ pub fn get_remb(packet: &[i8]) -> Option<u32> {
     }
 }
 
-/// Increments the given sequence number, then allocates and writes a new FIR packet with the new sequence number.
+/// Allocates and writes a new FIR packet with the given sequence number. The given sequence number needs to be incremented before calling the function.
 pub fn gen_fir(seq: &mut i32) -> Vec<i8> {
     let mut packet = Vec::with_capacity(20);
     let result = unsafe { ffi::rtcp::janus_rtcp_fir(packet.as_mut_ptr(), 20, seq) };
