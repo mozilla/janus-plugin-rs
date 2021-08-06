@@ -31,6 +31,8 @@ pub mod session;
 pub mod jansson;
 pub mod utils;
 pub mod refcount;
+#[cfg(test)]
+mod test_stubs;
 
 bitflags! {
     /// Flags that control which events an event handler receives.

@@ -93,22 +93,25 @@ impl<T> Drop for SessionWrapper<T> {
 unsafe impl<T: Sync> Sync for SessionWrapper<T> {}
 unsafe impl<T: Send> Send for SessionWrapper<T> {}
 
-// todo: port to refcount branch
-/*
 #[cfg(test)]
 mod tests {
 
     use super::*;
+    use crate::refcount::ReferenceCount;
     use std::ptr;
 
     #[test]
     fn handle_round_trip() {
         struct State(i32);
+        extern "C" fn janus_session_free(_session_ref: *const ReferenceCount) {}
         let mut handle = PluginSession {
             gateway_handle: ptr::null_mut(),
             plugin_handle: ptr::null_mut(),
-            stopped_bitfield: 0,
-            __padding: Default::default(),
+            stopped: 0,
+            ref_: ReferenceCount {
+                count: 1,
+                free: janus_session_free,
+            },
         };
 
         let ptr = &mut handle as *mut _;
@@ -117,4 +120,3 @@ mod tests {
         assert_eq!(unsafe { SessionWrapper::<State>::from_ptr(ptr).unwrap().state.0 }, 42);
     }
 }
-*/
