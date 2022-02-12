@@ -12,7 +12,7 @@ janus-plugin = "0.13.0"
 
 ## Compatibility
 
-Currently compatible with Janus versions >= 0.10.9; Janus makes breaking changes relatively frequently to
+Currently compatible with Janus versions >= 0.11.6; Janus makes breaking changes relatively frequently to
 the plugin API, so expect this library to require updating and recompilation for plugins to continue to work with new
 Janus versions.
 
@@ -69,7 +69,7 @@ const PLUGIN: Plugin = build_plugin!(
     LibraryMetadata {
         // The Janus plugin API version. The version compiled into the plugin
         // must be identical to the version in the Janus which loads the plugin.
-        api_version: 15,
+        api_version: 16,
         // Incrementing plugin version number for your own use.
         version: 1,
         // Human-readable metadata which Janus can query.
@@ -94,4 +94,4 @@ Here are some projects which are using these bindings:
 
 * https://github.com/mozilla/janus-plugin-sfu
 * https://github.com/ivanovaleksey/janus-echotest-rs
-* https://github.com/netology-group/janus-conference/
+* https://github.com/foxford/janus-conference/

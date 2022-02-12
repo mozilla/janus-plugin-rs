@@ -21,6 +21,7 @@ pub struct janus_callbacks {
     pub end_session: extern "C" fn(handle: *mut janus_plugin_session),
     pub events_is_enabled: extern "C" fn() -> c_int,
     pub notify_event: extern "C" fn(plugin: *mut janus_plugin, handle: *mut janus_plugin_session, event: *mut json_t),
+    pub auth_is_signed: extern "C" fn() -> gboolean,
     pub auth_is_signature_valid: extern "C" fn(plugin: *mut janus_plugin, token: *const c_char) -> gboolean,
     pub auth_signature_contains: extern "C" fn(plugin: *mut janus_plugin, token: *const c_char, descriptor: *const c_char) -> gboolean,
 }
